@@ -2,9 +2,9 @@
 import { API_ENDPOINT_CARRITO } from "../cms-web-components/config/apiConfig";
 //SESSION
 import { TIPO_CONTENIDO_CONFIG } from "../cms-web-components/config/tipoContenidoConfig";
-import { getImage } from "../cms-web-components/apis/apiContentSettings.server";
 import { getSession } from "~/servicies/session.server";
 import { json } from "stream/consumers";
+import { getImage } from "./apiContentSettings.server";
 
 //NO BORRAR EL TAG DE PRUEBAS
 const tag = "3436";
