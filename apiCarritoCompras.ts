@@ -1,5 +1,5 @@
 //API
-import { API_ENDPOINT_CARRITO } from "../cms-web-components/config/apiConfig";
+import { API_ENDPOINT_CARRITO } from "./apiConfig";
 //SESSION
 import { TIPO_CONTENIDO_CONFIG } from "../cms-web-components/config/tipoContenidoConfig";
 import { getSession } from "~/servicies/session.server";

@@ -1,4 +1,4 @@
-import { API_ENDPOINTS_CONTENT_SETTEINGS, API_ENDPOINTS_PRODUCTOS } from "~/cms-web-components/config/apiConfig";
+import { API_ENDPOINTS_CONTENT_SETTEINGS, API_ENDPOINTS_PRODUCTOS } from "~/cms-web-apis/apiConfig";
 import { DEFAULT_IMAGE_BASE64_STRING } from "~/cms-web-components/config/imageConfig";
 import { TIPO_CONTENIDO_CONFIG } from "../cms-web-components/config/tipoContenidoConfig";
 import { redirect } from "react-router";

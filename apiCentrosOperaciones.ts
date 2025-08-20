@@ -1,5 +1,5 @@
 //API
-import { API_ENDOPOINT_CENTROS_OPERACIONES } from "~/cms-web-components/config/apiConfig";
+import { API_ENDOPOINT_CENTROS_OPERACIONES } from "~/cms-web-apis/apiConfig";
 import { redirect } from "react-router";
 //SESSION
 

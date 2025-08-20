@@ -1,6 +1,6 @@
 
 //CONFIG
-import { API_ENDPOINT_STYLES } from "~/cms-web-components/config/apiConfig";
+import { API_ENDPOINT_STYLES } from "~/cms-web-apis/apiConfig";
 import { getSession } from "~/servicies/session.server";
 //SESION
 function isJsonParseable(str: string): boolean {

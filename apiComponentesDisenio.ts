@@ -1,5 +1,5 @@
 import { getSession } from "~/servicies/session.server";
-import { API_ENDPOINT_COMPONENTES_DISENIO } from "../cms-web-components/config/apiConfig";
+import { API_ENDPOINT_COMPONENTES_DISENIO } from "./apiConfig";
 
 
 
