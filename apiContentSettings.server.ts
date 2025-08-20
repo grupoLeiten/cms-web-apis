@@ -1,7 +1,6 @@
 import { API_ENDPOINTS_CONTENT_SETTEINGS, API_ENDPOINTS_PRODUCTOS } from "~/cms-web-apis/apiConfig";
 import { DEFAULT_IMAGE_BASE64_STRING } from "~/cms-web-components/config/imageConfig";
 import { TIPO_CONTENIDO_CONFIG } from "../cms-web-components/config/tipoContenidoConfig";
-import { redirect } from "react-router";
 
 export const getVista = async ({ request, params, token }: { request: Request, params: any, token: string }) => {
 
@@ -148,7 +147,7 @@ export const getMenu = async ({ request, params, token }: { request: Request, pa
             // TODO: Implement return object for subItem if needed
             return {
                 ...subItem,
-                image: multimedia ? await getImage({ request, id: subItem.id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, idView: idView, token }) : null,
+                image: multimedia ? await getImage({ request, id: subItem.id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault : "", idView: idView, token }) : null,
             };
         }));
         return {
@@ -302,7 +301,7 @@ export const postCarruselConfig = async ({ request, idVista, data, token }: { re
     const responseWithImages = await Promise.all(
         carruselData.Items.map(async (item: any) => {
             const { IdItem } = item;
-            const image = await getImage({ request, id: IdItem, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenBanner, idView: idVista, token });
+            const image = await getImage({ request, id: IdItem, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenBanner, noImageDefault : "", idView: idVista, token });
             return { ...item, image };
         })
     );
@@ -343,7 +342,7 @@ export const getBannersVista = async ({ request, idVista, token }: { request: Re
     const dataWithImages = await Promise.all(
         Banners.map(async (item: any) => {
             const { Id } = item;
-            const image = await getImage({ request, id: Id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenBanner, noImageDefault: "", idView: idVista });
+            const image = await getImage({ request, id: Id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenBanner, noImageDefault: "", idView: idVista, token });
             return { ...item, image };
         })
     );
