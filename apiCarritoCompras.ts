@@ -22,7 +22,7 @@ export const getCarrito = async ({ token }: { token: string }) => {
     const itemsWithImage = await Promise.all(carrito.items.map(async (item: any) => {
         return {
             ...item,
-            image: await getImage({ request : "", id: item.idEntity, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: "0" , token})
+            image: await getImage({ request: "", id: item.idEntity, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: "0", token })
         }
     }));
 
@@ -39,9 +39,9 @@ export const updateCarrito = async ({ id, cantidad, token }: { id: string, canti
             "Authorization": token,
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ 
-            "tag" : tag,
-            "idItem" : 0,
+        body: JSON.stringify({
+            "tag": tag,
+            "idItem": 0,
             "idEntity": id,
             "cantidad": Number(cantidad)
         })
@@ -56,7 +56,7 @@ export const updateCarrito = async ({ id, cantidad, token }: { id: string, canti
     const itemsWithImage = await Promise.all(carrito.carritoActualizado.items.map(async (item: any) => {
         return {
             ...item,
-            image: await getImage({ request : "", id: item.idEntity, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: "0" , token})
+            image: await getImage({ request: "", id: item.idEntity, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: "0", token })
         }
     }));
 
@@ -96,6 +96,16 @@ export const removeItemFromCarrito = async ({ token, itemId }: { token: string, 
         throw ("Failed to remove item from cart");
     }
 
-    const result = await response.json();
-    return result;
+    const carrito = await response.json();
+
+    const itemsWithImage = await Promise.all(carrito.carritoActualizado.items.map(async (item: any) => {
+        return {
+            ...item,
+            image: await getImage({ request: "", id: item.idEntity, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: "0", token })
+        }
+    }));
+
+    carrito.carritoActualizado.items = itemsWithImage;
+
+    return carrito;
 };
