@@ -22,8 +22,8 @@ export const getVista = async ({ request, params, token }: { request: Request, p
     return vistasData;
 }
 
-export const getItemsBySearchView = async ({ request, params, token }: { request: Request, params: any, token: string }) => {
-    const { idView, searchProduct } = params;
+export const getItemsBySearchView = async ({ params, token, searchProduct }: { params: any, token: string, searchProduct: string }) => {
+    const { idView } = params;
 
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_ITEMS_BY_SEARCH_VIEW}/IdVista/${idView}/PatronBusqueda/${searchProduct}`,
         {
@@ -222,6 +222,7 @@ export const getImage = async ({ request, id, tipoContenido, noImageDefault, idV
         const image = `data:image/jpeg;base64,${imageBase64}`;
         return image;
     } catch (error) {
+        console.log("Rompio la imagen")
         return noImageDefault;
 
         //        return `data:image/png;base64,${DEFAULT_IMAGE_BASE64_STRING}`;
