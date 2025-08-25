@@ -21,7 +21,7 @@ export const getCarrito = async ({ token }: { token: string }) : Promise<any> =>
     const itemsWithImage = await Promise.all(carrito.items.map(async (item: any) => {
         return {
             ...item,
-            image: await getImage({ request: "", id: item.idEntity, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: "0", token })
+            image: await getImage({ id: item.idEntity, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: "0", token })
         }
     }));
 
@@ -47,7 +47,7 @@ export const getCarrito = async ({ token }: { token: string }) : Promise<any> =>
         strCliente,
         simboloMoneda,
         data: [
-            { type: "products", data: items, simboloMoneda },
+            { type: "products", data: itemsWithImage, simboloMoneda },
             { type: "impuestos", data: impuestos, simboloMoneda },
             { type: "importe", data: importeTotal, simboloMoneda },
             { type: "importeSubTotalSinImpuestos", data: importeSubTotalSinImpuestos, simboloMoneda },

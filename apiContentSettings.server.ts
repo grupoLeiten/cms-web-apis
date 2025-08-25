@@ -290,7 +290,7 @@ export const getContenidoFichaSucursalItem = async ({ idView, token }) => {
     return json;
 }
 
-export const getAtributosCMS = async ({ request, idView, idMenu, arrayFilterJson, token }: { request: Request, idView: string, idMenu: string, arrayFilterJson: string, token: string }) => {
+export const getAtributosCMS = async ({ idView, idMenu, arrayFilterJson, token }: { idView: string, idMenu: string, arrayFilterJson: string, token: string }) => {
 
 
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_ATRIBUTOS_CMS}?IdVista=${idView}&Id=${idMenu}`,
