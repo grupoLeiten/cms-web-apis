@@ -2,15 +2,14 @@
 import { API_ENDPOINT_CARRITO } from "./apiConfig";
 //SESSION
 import { TIPO_CONTENIDO_CONFIG } from "../cms-web-components/config/tipoContenidoConfig";
-import { getSession } from "~/servicies/session.server";
-import { json } from "stream/consumers";
 import { getImage } from "./apiContentSettings.server";
+
 
 //NO BORRAR EL TAG DE PRUEBAS
 const tag = "3436";
 //NO BORRAR EL TAG DE PRUEBAS
 
-export const getCarrito = async ({ request,  token }: { token: string }) => {
+export const getCarrito = async ({ token }: { token: string }) : Promise<any> => {
     const response = await fetch(`${API_ENDPOINT_CARRITO.GET}/Tag/${tag}`, {
         headers: {
             "Authorization": token
@@ -26,7 +25,6 @@ export const getCarrito = async ({ request,  token }: { token: string }) => {
         }
     }));
 
-    carrito.items = itemsWithImage;
 
     const { /* tag, */
         esAnonimo,
