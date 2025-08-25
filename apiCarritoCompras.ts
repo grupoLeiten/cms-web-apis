@@ -80,7 +80,7 @@ export const updateCarrito = async ({ id, cantidad, token }: { id: string, canti
     const itemsWithImage = await Promise.all(carrito.carritoActualizado.items.map(async (item: any) => {
         return {
             ...item,
-            image: await getImage({ request: "", id: item.idEntity, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: "0", token })
+            image: await getImage({ id: item.idEntity, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: "0", token })
         }
     }));
 
@@ -158,11 +158,42 @@ export const removeItemFromCarrito = async ({ token, itemId }: { token: string, 
     const itemsWithImage = await Promise.all(carrito.carritoActualizado.items.map(async (item: any) => {
         return {
             ...item,
-            image: await getImage({ request: "", id: item.idEntity, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: "0", token })
+            image: await getImage({ id: item.idEntity, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: "0", token })
         }
     }));
 
-    carrito.carritoActualizado.items = itemsWithImage;
+      const {
+        /* tag, */
+        carritoActualizado,
+        itemActualizado
+    } = carrito;
 
+    const {
+        impuestos,
+        importeTotal,
+        importeSubTotalSinImpuestos,
+        simboloMoneda,
+        esAnonimo,
+        esCliente,
+        enProcesoDePago,
+        strUusuario,
+        strCliente,
+        items,
+    } = carritoActualizado;
+
+    return {
+        esAnonimo,
+        esCliente,
+        enProcesoDePago,
+        strUusuario,
+        strCliente,
+        simboloMoneda,
+        data: [
+            { type: "products", data: itemsWithImage },
+            { type: "impuestos", data: impuestos },
+            { type: "importe", data: importeTotal },
+            { type: "importe", data: importeSubTotalSinImpuestos },
+        ]
+    };
     return carrito;
 };
