@@ -2,10 +2,9 @@ import { API_ENDPOINTS_CONTENT_SETTEINGS, API_ENDPOINTS_PRODUCTOS } from "~/cms-
 import { DEFAULT_IMAGE_BASE64_STRING } from "~/cms-web-components/config/imageConfig";
 import { TIPO_CONTENIDO_CONFIG } from "../cms-web-components/config/tipoContenidoConfig";
 
-export const getVista = async ({ request, params, token }: { request: Request, params: any, token: string }) => {
+export const getVista = async ({ params, token }: { params: any, token: string }) => {
 
     const { idView } = params;
-
 
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_VISTA}/IdVista/${idView}`,
         {
@@ -15,8 +14,6 @@ export const getVista = async ({ request, params, token }: { request: Request, p
             }
         }
     );
-
-
 
     const vistasData = await response.json();
     return vistasData;
@@ -35,14 +32,14 @@ export const getItemsBySearchView = async ({ params, token, searchProduct }: { p
     );
 
 
-    
+
 
     const itemsData = await response.json();
 
     return itemsData;
 }
 
-export const getVistas = async ({ request, token }: { request: Request, token: string }) => {
+export const getVistas = async ({ token }: { token: string }) => {
 
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_VISTAS}`,
         {
@@ -54,14 +51,14 @@ export const getVistas = async ({ request, token }: { request: Request, token: s
     );
 
 
-    
+
 
     const vistasData = await response.json();
 
     return vistasData;
 }
 
-export const getDefinirProductos = async ({ request, params, token }: { request: Request, params: any, token: string }) => {
+export const getDefinirProductos = async ({ params, token }: { params: any, token: string }) => {
 
     const response = await fetch(`${API_ENDPOINTS_PRODUCTOS.SEARCH}/PatronBusqueda/${search}`,
         {
@@ -73,13 +70,13 @@ export const getDefinirProductos = async ({ request, params, token }: { request:
     );
 
 
-    
+
 
     const productosData = await response.json();
     return productosData;
 }
 
-export const getActionVista = async ({ request, params, token }: { request: Request, params: any, token: string }) => {
+export const getActionVista = async ({ params, token }: { params: any, token: string }) => {
 
     const { idView } = params;
 
@@ -94,14 +91,41 @@ export const getActionVista = async ({ request, params, token }: { request: Requ
         }
     );
 
-    
+
     const vistasData = await response.json();
 
     return vistasData.action;
 }
 
+export const getParametros = async ({ params, token }: { params: any, token: string }) => {
 
-export const getVistaTemplateName = async ({ request, params, token }: { request: Request, params: any, token: string }) => {
+    const { idView } = params;
+
+    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_VISTA}/IdVista/${idView}`,
+        {
+            method: "GET",
+            headers: {
+                Authorization: token
+            }
+        }
+    );
+
+    const vistasData = await response.json();
+
+    const noImageDefault = vistasData.noImageDefault  ?await getImage({ id: vistasData.noImageDefault, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenGrande, noImageDefault: "", idView: idView, token }) : null;
+
+
+
+    return {
+        action: vistasData.action,
+        noImageDefault: noImageDefault,
+        onGoToHomeAction: vistasData.onGoToHomeAction,
+        onGoToSearchAction: vistasData.onGoToSearchAction
+    };
+}
+
+
+export const getVistaTemplateName = async ({ params, token }: { params: any, token: string }) => {
 
     const { idView } = params;
 
@@ -116,14 +140,14 @@ export const getVistaTemplateName = async ({ request, params, token }: { request
     );
 
 
-    
+
 
     const vistasData = await response.json();
 
     return vistasData.templateName;
 }
 
-export const getMenu = async ({ request, params, token }: { request: Request, params: any, token: string }) => {
+export const getMenu = async ({ params, token }: { params: any, token: string }) => {
 
     const { idView, idMenu } = params;
 
@@ -147,7 +171,7 @@ export const getMenu = async ({ request, params, token }: { request: Request, pa
             // TODO: Implement return object for subItem if needed
             return {
                 ...subItem,
-                image: multimedia ? await getImage({ request, id: subItem.id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault : "", idView: idView, token }) : null,
+                image: multimedia ? await getImage({ id: subItem.id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: idView, token }) : null,
             };
         }));
         return {
@@ -160,7 +184,7 @@ export const getMenu = async ({ request, params, token }: { request: Request, pa
 }
 
 
-export const getTiposContenido1 = async ({ request, token }: { request: Request, token: string }) => {
+export const getTiposContenido1 = async ({ token }: { token: string }) => {
 
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_TIPOS_CONTENIDO1}`, {
         method: "GET",
@@ -176,15 +200,10 @@ export const getTiposContenido1 = async ({ request, token }: { request: Request,
 const cache = new Map();
 
 
-const _getIdTipoContenido = async (request: Request, tipo: string, token: string) => {
+const _getIdTipoContenido = async (tipo: string, token: string) => {
 
-    const cached = cache.get("tipo");
 
-    if (cache.has("tipo")) {
-        return cache.get("tipo");
-    }
-
-    const data = await getTiposContenido1({ request, token });
+    const data = await getTiposContenido1({ token });
 
     const TipoContenido = data.find((item: any) => {
 
@@ -196,10 +215,21 @@ const _getIdTipoContenido = async (request: Request, tipo: string, token: string
     return TipoContenido.idTipoContenido;
 }
 
-export const getImage = async ({ request, id, tipoContenido, noImageDefault, idView, token }: { request: any, id: string, tipoContenido: string, noImageDefault: string, idView: string, token: string }) => {
+export const getImage = async ({
+    id,
+    tipoContenido,
+    noImageDefault,
+    idView,
+    token
+}: {
+    id: string,
+    tipoContenido: string,
+    noImageDefault: string | null,
+    idView: string,
+    token: string
+}) => {
 
-
-    const idTipoContenido = await _getIdTipoContenido(request, tipoContenido, token);
+    const idTipoContenido = await _getIdTipoContenido(tipoContenido, token);
 
     try {
         const imageResponse = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.IMAGE}/Id/${id}/TipoContenido/${idTipoContenido}/IdVista/${idView}`, {
@@ -217,20 +247,17 @@ export const getImage = async ({ request, id, tipoContenido, noImageDefault, idV
         );
         if (!imageResponse.ok) {
             return noImageDefault;
-            // return `data:image/png;base64,${DEFAULT_IMAGE_BASE64_STRING}`;
         }
         const image = `data:image/jpeg;base64,${imageBase64}`;
         return image;
     } catch (error) {
         console.log("Rompio la imagen")
         return noImageDefault;
-
-        //        return `data:image/png;base64,${DEFAULT_IMAGE_BASE64_STRING}`;
     }
 }
 
 
-export const getDefinirProductosaAction = async ({ request, search, token }: { request: Request, search: any, token: string }) => {
+export const getDefinirProductosaAction = async ({ search, token }: { search: any, token: string }) => {
 
     const response = await fetch(`${API_ENDPOINTS_PRODUCTOS.SEARCH}/PatronBusqueda/${search}`,
         {
@@ -246,7 +273,7 @@ export const getDefinirProductosaAction = async ({ request, search, token }: { r
     return productosData;
 }
 
-export const getContenidoFichaSucursalItem = async ({ request, idView, token }) => {
+export const getContenidoFichaSucursalItem = async ({ idView, token }) => {
 
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_CONTENIDO_FICHA_SUCURSAL_ITEM}?IdVista=${idView}`,
         {
@@ -283,7 +310,7 @@ export const getAtributosCMS = async ({ request, idView, idMenu, arrayFilterJson
 
 }
 
-export const postCarruselConfig = async ({ request, idVista, data, token }: { request: Request, idVista: string, data: any, token: string }) => {
+export const postCarruselConfig = async ({ idVista, token, noImageDefault }: { idVista: string, token: string, noImageDefault: string | null }) => {
 
 
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.POST_CARRUSEL}?IdVista=${idVista}`, {
@@ -292,17 +319,14 @@ export const postCarruselConfig = async ({ request, idVista, data, token }: { re
             "Content-Type": "application/json",
             "Authorization": token
         },
-        body: JSON.stringify(data)
-
     });
-
 
     const carruselData = await response.json();
 
     const responseWithImages = await Promise.all(
         carruselData.Items.map(async (item: any) => {
             const { IdItem } = item;
-            const image = await getImage({ request, id: IdItem, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenBanner, noImageDefault : "", idView: idVista, token });
+            const image = await getImage({ id: IdItem, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenBanner, noImageDefault, idView: idVista, token });
             return { ...item, image };
         })
     );
@@ -325,7 +349,7 @@ export const postCarruselConfig = async ({ request, idVista, data, token }: { re
 };
 
 
-export const getBannersVista = async ({ request, idVista, token }: { request: Request, idVista: string, token: string }) => {
+export const getBannersVista = async ({ idVista, token, noImageDefault }: { idVista: string, token: string, noImageDefault: string | null }) => {
 
 
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_BANNER_VISTA}?IdVista=${idVista}`,
@@ -343,8 +367,8 @@ export const getBannersVista = async ({ request, idVista, token }: { request: Re
     const dataWithImages = await Promise.all(
         Banners.map(async (item: any) => {
             const { Id } = item;
-            const image = await getImage({ request, id: Id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenBanner, noImageDefault: "", idView: idVista, token });
-            return { ...item, image };
+            const img = await getImage({ id: Id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenBanner, noImageDefault, idView: idVista, token });
+            return { ...item, img };
         })
     );
 
@@ -352,7 +376,7 @@ export const getBannersVista = async ({ request, idVista, token }: { request: Re
 }
 
 
-export const getVideosVista = async ({ request, idVista, token }: { request: Request, idVista: string, token: string }) => {
+export const getVideosVista = async ({ idVista, token }: { idVista: string, token: string }) => {
 
     const response = await fetch(
         `${API_ENDPOINTS_CONTENT_SETTEINGS.GET_VIDOES_VISTA}?IdVista=${idVista}`,
@@ -402,7 +426,7 @@ export const getVideosVista = async ({ request, idVista, token }: { request: Req
 };
 
 
-export const getItems = async (request, idView, arrayFilterJson, idSucursal = 0, pagina = 0, ItemsPorPagina = 0, token) => {
+export const getItems = async (idView, arrayFilterJson, idSucursal = 0, pagina = 0, ItemsPorPagina = 0, token, noImageDefault) => {
 
 
 
@@ -417,18 +441,14 @@ export const getItems = async (request, idView, arrayFilterJson, idSucursal = 0,
 
     const data = await response.json();
 
-    const dataVista = await getVista({ request, params: { idView }, token });
-    let noImageDefault = `data:image/jpeg;base64,${DEFAULT_IMAGE_BASE64_STRING}`;
+    noImageDefault = await getImage({ id: noImageDefault, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault, idView, token });
 
-    if (dataVista?.noImageDefault) {
-        noImageDefault = await getImage({ request, id: dataVista.noImageDefault, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault, idView, token });
-    }
 
 
     const dataWithImages = await Promise.all(
         data.map(async (item: any) => {
             const { id } = item;
-            const image = await getImage({ request, id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault, idView, token });
+            const image = await getImage({ id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault, idView, token });
             return { ...item, image };
         })
     );
@@ -437,7 +457,7 @@ export const getItems = async (request, idView, arrayFilterJson, idSucursal = 0,
 }
 
 
-export const getContenidoFichaItem = async (request, idView, token) => {
+export const getContenidoFichaItem = async (idView, token) => {
 
 
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_CONTENIDO_FICHA_ITEM}?IdVista=${idView}`,
@@ -455,7 +475,7 @@ export const getContenidoFichaItem = async (request, idView, token) => {
     return json;
 }
 
-export const fetchImageById = async ({ request, id, idView, token }: { request: Request, id: number, idView: number, token: string }) => {
+export const fetchImageById = async ({ id, idView, token }: { id: number, idView: number, token: string }) => {
 
     const imageResponse = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_IMAGEN_BY_ID_IMAGEN}/Id/${id}/IdVista/${idView}`, {
         method: "GET",
@@ -482,12 +502,10 @@ export const fetchImageById = async ({ request, id, idView, token }: { request: 
 }
 
 export const getFichaProducto = async ({
-    request,
     idView,
     idProducto,
     token
 }: {
-    request: Request;
     idView: string;
     idProducto: String;
     token: string;
@@ -509,7 +527,7 @@ export const getFichaProducto = async ({
 
     const imagen = await Promise.all(
         data.galeriaFotos.map(async (item: any) => {
-            const image = await fetchImageById({ request, id: item.idImagen, idView, token });
+            const image = await fetchImageById({ id: item.idImagen, idView, token });
             return { ...item, image, alt: "" };
         })
     );
@@ -526,7 +544,6 @@ export const getFichaProducto = async ({
                 const contenidosWithPDF = await Promise.all(
                     item.contenidos.map(async (subItem: any) => {
                         const documento = await getImagenAsDownload({
-                            request,
                             id: subItem.idImagen,
                             token
                         });
@@ -540,7 +557,6 @@ export const getFichaProducto = async ({
             const contenidosWithImages = await Promise.all(
                 item.contenidos.map(async (subItem: any) => {
                     const image = await getImage({
-                        request,
                         id: subItem.idImagen,
                         tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenGrande,
                         noImageDefault: "",
@@ -576,7 +592,7 @@ export const getFichaProducto = async ({
 };
 
 
-export const getImagenAsDownload = async ({ request, id, token }: { request: Request, id: string, token: string }) => {
+export const getImagenAsDownload = async ({ id, token }: { id: string, token: string }) => {
 
 
 

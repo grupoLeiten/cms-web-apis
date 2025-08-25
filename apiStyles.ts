@@ -12,7 +12,7 @@ function isJsonParseable(str: string): boolean {
     }
 }
 
-export const getStylesVista = async ({ request, params, token }: { request: Request, params: any, token: string }) => {
+export const getStylesVista = async ({ params, token }: { params: any, token: string }) => {
 
     const idView = params.idView;
     const response = await fetch(`${API_ENDPOINT_STYLES.GET_STYLE_VISTA}/IdVista/${idView}`, {

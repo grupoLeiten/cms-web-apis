@@ -3,7 +3,7 @@ import { API_ENDOPOINT_CENTROS_OPERACIONES } from "~/cms-web-apis/apiConfig";
 import { redirect } from "react-router";
 //SESSION
 
-export const getCentrosOperaciones = async ({ request, token }: { request: Request, token: string }) => {
+export const getCentrosOperaciones = async ({ token }: { token: string }) => {
     // const cookie = request.headers.get("Cookie");
     // const session = await getSession(cookie);
     // const userId = session.get("userId");
