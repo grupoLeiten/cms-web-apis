@@ -10,7 +10,7 @@ import { getImage } from "./apiContentSettings.server";
 const tag = "3436";
 //NO BORRAR EL TAG DE PRUEBAS
 
-export const getCarrito = async ({ token }: { token: string }) => {
+export const getCarrito = async ({ request,  token }: { token: string }) => {
     const response = await fetch(`${API_ENDPOINT_CARRITO.GET}/Tag/${tag}`, {
         headers: {
             "Authorization": token
@@ -28,7 +28,33 @@ export const getCarrito = async ({ token }: { token: string }) => {
 
     carrito.items = itemsWithImage;
 
-    return carrito;
+    const { /* tag, */
+        esAnonimo,
+        esCliente,
+        enProcesoDePago,
+        strUusuario,
+        strCliente,
+        items,
+        impuestos,
+        importeTotal,
+        importeSubTotalSinImpuestos,
+        simboloMoneda
+    } = carrito;
+
+    return {
+        esAnonimo,
+        esCliente,
+        enProcesoDePago,
+        strUusuario,
+        strCliente,
+        simboloMoneda,
+        data: [
+            { type: "products", data: items, simboloMoneda },
+            { type: "impuestos", data: impuestos, simboloMoneda },
+            { type: "importe", data: importeTotal, simboloMoneda },
+            { type: "importeSubTotalSinImpuestos", data: importeSubTotalSinImpuestos, simboloMoneda },
+        ]
+    };
 }
 
 export const updateCarrito = async ({ id, cantidad, token }: { id: string, cantidad: string, token: string }) => {
@@ -63,7 +89,40 @@ export const updateCarrito = async ({ id, cantidad, token }: { id: string, canti
     carrito.carritoActualizado.items = itemsWithImage;
 
 
-    return carrito;
+
+    const {
+        /* tag, */
+        carritoActualizado,
+        itemActualizado
+    } = carrito;
+
+    const {
+        impuestos,
+        importeTotal,
+        importeSubTotalSinImpuestos,
+        simboloMoneda,
+        esAnonimo,
+        esCliente,
+        enProcesoDePago,
+        strUusuario,
+        strCliente,
+        items,
+    } = carritoActualizado;
+
+    return {
+        esAnonimo,
+        esCliente,
+        enProcesoDePago,
+        strUusuario,
+        strCliente,
+        simboloMoneda,
+        data: [
+            { type: "products", data: items },
+            { type: "impuestos", data: impuestos },
+            { type: "importe", data: importeTotal },
+            { type: "importe", data: importeSubTotalSinImpuestos },
+        ]
+    };
 
 }
 
