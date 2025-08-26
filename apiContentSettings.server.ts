@@ -251,7 +251,6 @@ export const getImage = async ({
         const image = `data:image/jpeg;base64,${imageBase64}`;
         return image;
     } catch (error) {
-        console.log("Rompio la imagen")
         return noImageDefault;
     }
 }

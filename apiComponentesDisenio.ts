@@ -19,5 +19,9 @@ export const getComponenteByCodigo = async ({ request, codigo }: { request: Requ
 
     const dataComponenteStyle = await response.json();
 
+    if (!response.ok) {
+        return [];
+    }
+
     return { dataComponenteStyle };
 }
