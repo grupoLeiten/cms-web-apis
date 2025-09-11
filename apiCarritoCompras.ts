@@ -3,13 +3,51 @@ import { API_ENDPOINT_CARRITO } from "./apiConfig";
 //SESSION
 import { TIPO_CONTENIDO_CONFIG } from "../cms-web-components/config/tipoContenidoConfig";
 import { getImage } from "./apiContentSettings.server";
+import { data } from "react-router";
+import MercadoPagoConfig, { Preference } from "mercadopago";
 
 
 //NO BORRAR EL TAG DE PRUEBAS
 const tag = "3436";
 //NO BORRAR EL TAG DE PRUEBAS
 
-export const getCarrito = async ({ token }: { token: string }) : Promise<any> => {
+export const getWalletMP = async ({ token, shoppingCart }: { token: string, shoppingCart: any }): Promise<any> => {
+
+
+    const productsItem = shoppingCart.data.find((item: any) => item.type === "products");
+    const itemsAdapater = productsItem?.data.map((product: any) => ({
+        id: product.idEntity,
+        title: product.nombre,
+        quantity: product.cantidad,
+        unit_price: product.importeTotal,
+    })) || [];
+
+    const clientMercadoPago = new MercadoPagoConfig({ accessToken: 'APP_USR-5013139518551403-082911-00d70979ed5e2eccdd79911ab46b0496-2657543910' });
+    const preference = new Preference(clientMercadoPago);
+
+
+    try {
+        const result = await preference.create({
+            body: {
+                items: [
+                    ...itemsAdapater
+                ],
+                back_urls: {
+                    success: "https://hikoki.com.ar/mp/success",
+                    failure: "https://hikoki.com.ar/mp/failure",
+                    pending: "https://hikoki.com.ar/mp/pending"
+                },
+                auto_return: "approved",
+            }
+        });
+        return { id: result.id };
+    } catch (error) {
+        console.log(error);
+        return { error: 'Error creating preference' };
+    }
+}
+
+export const getCarrito = async ({ token }: { token: string }): Promise<any> => {
     const response = await fetch(`${API_ENDPOINT_CARRITO.GET}/Tag/${tag}`, {
         headers: {
             "Authorization": token
@@ -39,6 +77,13 @@ export const getCarrito = async ({ token }: { token: string }) : Promise<any> =>
         simboloMoneda
     } = carrito;
 
+    const productos = [
+        { type: "products", data: itemsWithImage, simboloMoneda },
+        { type: "impuestos", data: impuestos, simboloMoneda },
+        { type: "importe", data: importeTotal, simboloMoneda },
+        { type: "importeSubTotalSinImpuestos", data: importeSubTotalSinImpuestos, simboloMoneda },
+    ]
+
     return {
         esAnonimo,
         esCliente,
@@ -51,11 +96,13 @@ export const getCarrito = async ({ token }: { token: string }) : Promise<any> =>
             { type: "impuestos", data: impuestos, simboloMoneda },
             { type: "importe", data: importeTotal, simboloMoneda },
             { type: "importeSubTotalSinImpuestos", data: importeSubTotalSinImpuestos, simboloMoneda },
+            { type: "esAnonimo", esAnonimo, data: productos },
+            { type: "esCliente", esCliente, data: productos }
         ]
     };
 }
 
-export const updateCarrito = async ({ id, cantidad, token }: { id: string, cantidad: string, token: string }) => {
+export const updateCarrito = async ({ id, idEntity, cantidad, token }: { id: string, idEntity: string, cantidad: string, token: string }) => {
 
     const response = await fetch(`${API_ENDPOINT_CARRITO.ACTUALIZAR}`, {
         method: "POST",
@@ -65,8 +112,8 @@ export const updateCarrito = async ({ id, cantidad, token }: { id: string, canti
         },
         body: JSON.stringify({
             "tag": tag,
-            "idItem": 0,
-            "idEntity": id,
+            "idItem": id,
+            "idEntity": idEntity,
             "cantidad": Number(cantidad)
         })
     });
@@ -83,9 +130,6 @@ export const updateCarrito = async ({ id, cantidad, token }: { id: string, canti
             image: await getImage({ id: item.idEntity, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: "0", token })
         }
     }));
-
-    carrito.carritoActualizado.items = itemsWithImage;
-
 
 
     const {
@@ -115,10 +159,13 @@ export const updateCarrito = async ({ id, cantidad, token }: { id: string, canti
         strCliente,
         simboloMoneda,
         data: [
-            { type: "products", data: items },
-            { type: "impuestos", data: impuestos },
-            { type: "importe", data: importeTotal },
-            { type: "importe", data: importeSubTotalSinImpuestos },
+            { type: "products", data: itemsWithImage, simboloMoneda },
+            { type: "impuestos", data: impuestos, simboloMoneda },
+            { type: "importe", data: importeTotal, simboloMoneda },
+            { type: "importeSubTotalSinImpuestos", data: importeSubTotalSinImpuestos, simboloMoneda },
+            { type: "esAnonimo", data: esAnonimo },
+            { type: "esCliente", data: esCliente }
+
         ]
     };
 
@@ -162,7 +209,7 @@ export const removeItemFromCarrito = async ({ token, itemId }: { token: string, 
         }
     }));
 
-      const {
+    const {
         /* tag, */
         carritoActualizado,
         itemActualizado
@@ -189,10 +236,10 @@ export const removeItemFromCarrito = async ({ token, itemId }: { token: string, 
         strCliente,
         simboloMoneda,
         data: [
-            { type: "products", data: itemsWithImage },
-            { type: "impuestos", data: impuestos },
-            { type: "importe", data: importeTotal },
-            { type: "importe", data: importeSubTotalSinImpuestos },
+            { type: "products", data: itemsWithImage, simboloMoneda },
+            { type: "impuestos", data: impuestos, simboloMoneda },
+            { type: "importe", data: importeTotal, simboloMoneda },
+            { type: "importeSubTotalSinImpuestos", data: importeSubTotalSinImpuestos, simboloMoneda },
         ]
     };
     return carrito;
