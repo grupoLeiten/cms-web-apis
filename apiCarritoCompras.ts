@@ -3,8 +3,7 @@ import { API_ENDPOINT_CARRITO } from "./apiConfig";
 //SESSION
 import { TIPO_CONTENIDO_CONFIG } from "../cms-web-components/config/tipoContenidoConfig";
 import { getImage } from "./apiContentSettings.server";
-import { data } from "react-router";
-import MercadoPagoConfig, { Preference } from "mercadopago";
+import { MercadoPagoConfig, Preference } from 'mercadopago';
 
 
 //NO BORRAR EL TAG DE PRUEBAS
