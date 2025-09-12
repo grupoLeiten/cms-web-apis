@@ -1,7 +1,7 @@
 
 
 import { redirect } from "react-router";
-import { API_ENDPOINTS_CONTENT_SETTEINGS, /* API_ENDPOINTS_CONTEXT */ } from "~/cms-web-apis/apiConfig";
+import { API_ENDPOINTS_CONTENT_SETTEINGS, API_ENDPOINTS_CONTEXT } from "~/cms-web-apis/apiConfig";
  import { commitSession, getSession } from "~/servicies/session.server";
 
 
