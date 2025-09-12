@@ -180,7 +180,7 @@ export const getMenu = async ({ params, token }: { params: any, token: string })
         };
     }));
 
-    return { title, menus: menuItems, multimedia };
+    return { title, menus: menuItems, multimedia, chip : { textoToHome : menus.textoToHome, actionHome : menus.actionHome } };
 }
 
 
@@ -561,7 +561,8 @@ export const getFichaProducto = async ({
                         idView,
                         token
                     });
-                    return { ...subItem, image };
+                    const itemBaseModel = { ...subItem.itemBaseModel, image };
+                    return { ...subItem, itemBaseModel };
                 })
             );
             return { ...item, contenidos: contenidosWithImages };
