@@ -574,6 +574,11 @@ export const getFichaProducto = async ({
     const { items, galeriaFotos, tabPositions, carruselModel, itemBaseModel, templateItems, ...others } = data;
     const { itemModel, ...carrouselConfig } = carruselModel;
 
+    const templateNombre =  templateItems.find((item: any) => item.Key === "#NOMBRE#");
+    const aux1 = templateItems.filter((item: any) => item.Key !== "#NOMBRE#");
+    const templateCodigo = templateItems.find((item: any) => item.Key === "#CODIGO#");
+    const aux2 = aux1.filter((item: any) => item.Key !== "#CODIGO#");
+
     return {
         dataCarrusel: {
             ...carrouselConfig,
@@ -581,11 +586,13 @@ export const getFichaProducto = async ({
         },
         tabPositions,
         itemModel,
-        title: others.nombre,
-        codigo: others.codigo,
+        nombre: itemBaseModel.nombre,
+        codigo: itemBaseModel.codigo,
         items,
         itemBaseModel,
-        templateItems,
+        templateNombre,
+        templateCodigo,
+        boxItems : aux2,
         othersProps: others
     };
 };
