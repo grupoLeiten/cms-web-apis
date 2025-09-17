@@ -8,18 +8,19 @@ import { API_ENDPOINTS_CONTENT_SETTEINGS, API_ENDPOINTS_CONTEXT } from "~/cms-we
 
 
 export async function tokenValid(token: string) {
-    try {
-        const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_TIPOS_CONTENIDO1}`, {
-            method: "GET",
-            headers: {
-                "Authorization": token
-            }
-        });
-        return response.ok;
-    } catch (err) {
-        console.error("Error en tokenValid:", err);
-        return false;
-    }
+    // try {
+    //     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_TIPOS_CONTENIDO1}`, {
+    //         method: "GET",
+    //         headers: {
+    //             "Authorization": token
+    //         }
+    //     });
+    //     return response.ok;
+    // } catch (err) {
+    //     console.error("Error en tokenValid:", err);
+    //     return false;
+    // }
+    return true;
 }
 
 
