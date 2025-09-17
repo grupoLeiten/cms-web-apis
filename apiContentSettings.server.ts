@@ -404,9 +404,9 @@ export const getVideosVista = async ({ idVista, token }: { idVista: string, toke
             }
 
             try {
-                const thumbResponse = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${videoId}`);
+                const thumbResponse = await fetch(`https://vimeo.com/api/v2/video/${videoId}.json`);
                 const thumbData = await thumbResponse.json();
-                const thumbnail = thumbData.thumbnail_large;
+                const thumbnail = thumbData[0].thumbnail_large;
 
                 return {
                     src: video.Id,
