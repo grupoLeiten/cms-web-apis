@@ -28,7 +28,8 @@ export const API_ENDPOINTS_CONTENT_SETTEINGS = {
     GET_IMAGEN_BY_ID_IMAGEN: `${API_BASE_URL}/ContentSettings/GetImagenByIdImagen`,
     GET_TIPOS_CONTENIDO1: `${API_BASE_URL}/ContentSettings/GetTiposContenido1`,
     GET_IMAGEN_AS_DOWNLOAD: `${API_BASE_URL}/ContentSettings/GetImagenAsDownload`,
-    GET_ITEMS_BY_SEARCH_VIEW: `${API_BASE_URL}/ContentSettings/GetItemsBySearch`
+    GET_ITEMS_BY_SEARCH_VIEW: `${API_BASE_URL}/ContentSettings/GetItemsBySearch`,
+    MENU_GRID : `${API_BASE_URL}/ContentSettings/ContentSettings/GetMenuGrid`,
 }
 
 export const API_ENDPOINT_STYLES = {

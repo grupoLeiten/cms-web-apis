@@ -147,6 +147,24 @@ export const getVistaTemplateName = async ({ params, token }: { params: any, tok
     return vistasData.templateName;
 }
 
+export const getMenuGrid = async ({ params, token }: { params: any, token: string }) => {
+
+    const { idView, idMenu } = params;
+    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.MENU_GRID}/IdVista/${idView}/IdMenu/${idMenu}`,
+        {
+            method: "GET",
+            headers: {
+                Authorization: token
+            }
+        }
+    );
+
+    const data = await response.json();
+
+    return data;
+
+}
+
 export const getMenu = async ({ params, token }: { params: any, token: string }) => {
 
     const { idView, idMenu } = params;
