@@ -19,6 +19,20 @@ export const getVista = async ({ params, token }: { params: any, token: string }
     return vistasData;
 }
 
+
+export const getListaDeObjetos = async ({ idView, token }: { idView: string, token: string }) => {
+
+    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.LISTA_DE_OBJETOS}?IdVista=${idView}`,
+        {
+            method: "GET",
+            headers: {
+                Authorization: token
+            }
+        }
+    );
+    const data = await response.json();
+    return data.ListaDeObjetos;
+}
 export const getItemsBySearchView = async ({ params, token, searchProduct }: { params: any, token: string, searchProduct: string }) => {
     const { idView } = params;
 

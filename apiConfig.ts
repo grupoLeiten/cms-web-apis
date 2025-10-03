@@ -30,6 +30,7 @@ export const API_ENDPOINTS_CONTENT_SETTEINGS = {
     GET_IMAGEN_AS_DOWNLOAD: `${API_BASE_URL}/ContentSettings/GetImagenAsDownload`,
     GET_ITEMS_BY_SEARCH_VIEW: `${API_BASE_URL}/ContentSettings/GetItemsBySearch`,
     MENU_GRID : `${API_BASE_URL}/ContentSettings/ContentSettings/GetMenuGrid`,
+    LISTA_DE_OBJETOS : `${API_BASE_URL}/ContentSettings/GetListaDeObjetos`,
 }
 
 export const API_ENDPOINT_STYLES = {
