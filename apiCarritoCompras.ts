@@ -46,8 +46,10 @@ export const getWalletMP = async ({ token, shoppingCart }: { token: string, shop
     }
 }
 
+const CMS_EDITABLE = import.meta.env.VITE_CMS_EDITABLE === 'true' ? true : false;
+
 export const getCarrito = async ({ token }: { token: string }): Promise<any> => {
-    const response = await fetch(`${API_ENDPOINT_CARRITO.GET}/Tag/${tag}`, {
+    const response = await fetch(`${API_ENDPOINT_CARRITO.GET}/Tag/${tag}?esVersionEditable=${CMS_EDITABLE}`, {
         headers: {
             "Authorization": token
         }
