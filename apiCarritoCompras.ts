@@ -91,7 +91,14 @@ export const getCarrito = async ({ token }: { token: string }): Promise<any> => 
         enProcesoDePago,
         strUusuario,
         strCliente,
-        simboloMoneda,
+       
+        productos : itemsWithImage,
+        impuestos : impuestos,
+        importeTotal : importeTotal,
+        importeSubTotalSinImpuestos : importeSubTotalSinImpuestos,
+
+
+        //viejo
         data: [
             { type: "products", data: itemsWithImage, simboloMoneda },
             { type: "impuestos", data: impuestos, simboloMoneda },
