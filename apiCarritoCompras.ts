@@ -91,11 +91,11 @@ export const getCarrito = async ({ token }: { token: string }): Promise<any> => 
         enProcesoDePago,
         strUusuario,
         strCliente,
-       
-        productos : itemsWithImage,
-        impuestos : impuestos,
-        importeTotal : importeTotal,
-        importeSubTotalSinImpuestos : importeSubTotalSinImpuestos,
+
+        productos: itemsWithImage,
+        impuestos: impuestos,
+        importeTotal: importeTotal,
+        importeSubTotalSinImpuestos: importeSubTotalSinImpuestos,
 
 
         //viejo
@@ -166,6 +166,12 @@ export const updateCarrito = async ({ id, idEntity, cantidad, token }: { id: str
         strUusuario,
         strCliente,
         simboloMoneda,
+        productos: itemsWithImage,
+        impuestos: impuestos,
+        importeTotal: importeTotal,
+        importeSubTotalSinImpuestos: importeSubTotalSinImpuestos,
+
+
         data: [
             { type: "products", data: itemsWithImage, simboloMoneda },
             { type: "impuestos", data: impuestos, simboloMoneda },
