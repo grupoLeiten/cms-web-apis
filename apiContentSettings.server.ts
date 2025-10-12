@@ -133,8 +133,8 @@ export const getParametros = async ({ params, token }: { params: any, token: str
     return {
         action: vistasData.action,
         noImageDefault: noImageDefault,
-        onGoToHomeAction: vistasData.onGoToHomeAction,
-        onGoToSearchAction: vistasData.onGoToSearchAction
+        onGoToHomeAction: vistasData.onGotoHomeAction,
+        onGoToSearchAction: vistasData.onSearchResultAction 
     };
 }
 

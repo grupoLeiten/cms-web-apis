@@ -12,6 +12,11 @@ export const API_ENDPOINTS_CONTEXT = {
 
 }
 
+export const API_ENDPOINT_CONTACTOS = {
+    POST_CREAR_CONTACTO: `${API_BASE_URL}/Contactos/ContactoCrear`,
+    POST_LOGIN_FROM_CONTACTO: `${API_BASE_URL}/Contactos/LoginFromContacto`,
+}
+
 export const API_ENDPOINTS_CONTENT_SETTEINGS = {
     GET_VISTA: `${API_BASE_URL}/ContentSettings/ContentSettings/GetVista`,
     GET_VISTAS: `${API_BASE_URL}/ContentSettings/ContentSettings/GetVistas`,
