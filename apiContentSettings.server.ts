@@ -126,7 +126,7 @@ export const getParametros = async ({ params, token }: { params: any, token: str
 
     const vistasData = await response.json();
 
-    const noImageDefault = vistasData.noImageDefault  ?await getImage({ id: vistasData.noImageDefault, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenGrande, noImageDefault: "", idView: idView, token }) : null;
+    const noImageDefault = vistasData.noImageDefault ? await getImage({ id: vistasData.noImageDefault, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenGrande, noImageDefault: "", idView: idView, token }) : null;
 
 
 
@@ -134,7 +134,7 @@ export const getParametros = async ({ params, token }: { params: any, token: str
         action: vistasData.action,
         noImageDefault: noImageDefault,
         onGoToHomeAction: vistasData.onGotoHomeAction,
-        onGoToSearchAction: vistasData.onSearchResultAction 
+        onGoToSearchAction: vistasData.onSearchResultAction
     };
 }
 
@@ -212,7 +212,7 @@ export const getMenu = async ({ params, token }: { params: any, token: string })
         };
     }));
 
-    return { title, menus: menuItems, multimedia, chip : { textoToHome : menus.textoToHome, actionHome : menus.actionHome } };
+    return { title, menus: menuItems, multimedia, chip: { textoToHome: menus.textoToHome, actionHome: menus.actionHome } };
 }
 
 
@@ -570,18 +570,18 @@ export const getFichaProducto = async ({
             }
 
             // ✅ DESCARGABLES (PDFs)
-            if (item.tipoContenido === "Descargables") {
-                const contenidosWithPDF = await Promise.all(
-                    item.contenidos.map(async (subItem: any) => {
-                        const documento = await getImagenAsDownload({
-                            id: subItem.idImagen,
-                            token
-                        });
-                        return { ...subItem, documento };
-                    })
-                );
-                return { ...item, contenidos: contenidosWithPDF };
-            }
+            // if (item.tipoContenido === "Descargables") {
+            //     const contenidosWithPDF = await Promise.all(
+            //         item.contenidos.map(async (subItem: any) => {
+            //             const documento = await getImagenAsDownload({
+            //                 id: subItem.idImagen,
+            //                 token
+            //             });
+            //             return { ...subItem, documento };
+            //         })
+            //     );
+            //     return { ...item, contenidos: contenidosWithPDF };
+            // }
 
             // ✅ OTROS (con imagen)
             const contenidosWithImages = await Promise.all(
@@ -606,7 +606,7 @@ export const getFichaProducto = async ({
     const { items, galeriaFotos, tabPositions, carruselModel, itemBaseModel, templateItems, ...others } = data;
     const { itemModel, ...carrouselConfig } = carruselModel;
 
-    const templateNombre =  templateItems.find((item: any) => item.Key === "#NOMBRE#");
+    const templateNombre = templateItems.find((item: any) => item.Key === "#NOMBRE#");
     const aux1 = templateItems.filter((item: any) => item.Key !== "#NOMBRE#");
     const templateCodigo = templateItems.find((item: any) => item.Key === "#CODIGO#");
     const aux2 = aux1.filter((item: any) => item.Key !== "#CODIGO#");
@@ -624,40 +624,66 @@ export const getFichaProducto = async ({
         itemBaseModel,
         templateNombre,
         templateCodigo,
-        boxItems : aux2,
+        boxItems: aux2,
         othersProps: others
     };
 };
 
 
-export const getImagenAsDownload = async ({ id, token }: { id: string, token: string }) => {
+// export const getImagenAsDownload = async ({ id, token }: { id: string, token: string }) => {
 
 
 
-    try {
-        const pdfResponse = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_IMAGEN_AS_DOWNLOAD}/Id/${id}`, {
-            method: "GET",
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token
-            }
-        });
+//     try {
+//         const pdfResponse = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_IMAGEN_AS_DOWNLOAD}/Id/${id}`, {
+//             method: "GET",
+//             headers: {
+//                 'Content-Type': 'application/json',
+//                 'Authorization': token
+//             }
+//         });
 
 
-        const pdfBlob = await pdfResponse.blob();
-        const url = URL.createObjectURL(pdfBlob);
-        // Extraer filename del header
-        const contentDisposition = pdfResponse.headers.get("content-disposition");
-        let filename = "archivo";
-        if (contentDisposition) {
-            const match = contentDisposition.match(/filename[^;=\n]*=((['\"]).*?\\2|[^;\n]*)/);
-            if (match && match[1]) {
-                filename = match[1].replace(/['"]/g, "");
-            }
+//         const pdfBlob = await pdfResponse.blob();
+//         const url = URL.createObjectURL(pdfBlob);
+//         // Extraer filename del header
+//         const contentDisposition = pdfResponse.headers.get("content-disposition");
+//         let filename = "archivo";
+//         if (contentDisposition) {
+//             const match = contentDisposition.match(/filename[^;=\n]*=((['\"]).*?\\2|[^;\n]*)/);
+//             if (match && match[1]) {
+//                 filename = match[1].replace(/['"]/g, "");
+//             }
+//         }
+
+//         return { url, filename };
+//     } catch (error) {
+//         throw new Error("Fallo la conexion.");
+//     }
+// }
+
+
+export async function getImagenAsDownload({ id, token }: { id: string, token: string }) {
+    const res = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_IMAGEN_AS_DOWNLOAD}/Id/${id}`, {
+        method: "GET",
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token
         }
+    });
+    if (!res.ok) throw new Error("No se pudo descargar el archivo");
 
-        return { url, filename };
-    } catch (error) {
-        throw new Error("Fallo la conexion.");
-    }
+    const buffer = await res.arrayBuffer();
+    const contentType = res.headers.get("content-type") || "application/octet-stream";
+    const contentDisposition = res.headers.get("content-disposition") || "attachment";
+    const contentLength = res.headers.get("content-length");
+
+    return new Response(Buffer.from(buffer), {
+        status: 200,
+        headers: {
+            "Content-Type": contentType,
+            "Content-Disposition": contentDisposition,
+            ...(contentLength ? { "Content-Length": contentLength } : {}),
+        },
+    });
 }
