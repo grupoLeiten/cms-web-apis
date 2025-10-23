@@ -36,7 +36,7 @@ export async function getAndreaniToken(): Promise<string | null> {
   }
 }
 
-export async function getCotizacion({ cpDestino, contrato, cliente, volumen }: { cpDestino: string; contrato: string; cliente: string; bultos: Array<{ volumen: string }> }) {
+export async function getCotizacion({ cpDestino, contrato, cliente, volumen }: { cpDestino: string; contrato: string; cliente: string; volumen: string; }) {
   const tokenAdreani = await getAndreaniToken();
   const url = new URL(ANDREANI_API_URL);
   url.searchParams.append("cpDestino", cpDestino);
