@@ -17,6 +17,10 @@ export const API_ENDPOINT_CONTACTOS = {
     POST_LOGIN_FROM_CONTACTO: `${API_BASE_URL}/Contactos/LoginFromContacto`,
 }
 
+export const API_ENDPOINT_PROVINCIAS = {
+    GET: `${API_BASE_URL}/Provincias/GetProvincias`,
+}
+
 export const API_ENDPOINTS_CONTENT_SETTEINGS = {
     GET_VISTA: `${API_BASE_URL}/ContentSettings/ContentSettings/GetVista`,
     GET_VISTAS: `${API_BASE_URL}/ContentSettings/ContentSettings/GetVistas`,
@@ -59,6 +63,7 @@ export const API_ENDPOINT_CARRITO = {
     ACTUALIZAR : `${API_BASE_URL}/CarritoCompras/Actualizar`,
     REMOVEITEM : `${API_BASE_URL}/CarritoCompras/RemoveItem`,
     CLEAR : `${API_BASE_URL}/CarritoCompras/Clear`,
+    ACTUALIZAR_ENVIO : `${API_BASE_URL}/CarritoCompras/SetEnvioCarrito`,
 }
 
 

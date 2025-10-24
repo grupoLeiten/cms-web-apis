@@ -258,3 +258,28 @@ export const removeItemFromCarrito = async ({ token, itemId }: { token: string, 
     };
     return carrito;
 };
+
+
+export const updateEnvioCarrito = async ({ msgRequest, msgResponse, strDireccion, strMetodoEnvio, codtoEnvio, token }: { msgRequest: any, msgResponse: any, strDireccion: string, strMetodoEnvio: string, codtoEnvio: string, token: string }) => {
+
+    const response = await fetch(`${API_ENDPOINT_CARRITO.ACTUALIZAR_ENVIO}`, {
+        method: "POST",
+        headers: {
+            "Authorization": token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            "tag": tag,
+            "strDireccion": strDireccion,
+            "strMetodoEnvio": strMetodoEnvio,
+            "codtoEnvio": codtoEnvio,
+            "msgRequest": msgRequest,
+            "msgResponse": msgResponse
+        })
+    });
+
+    if (!response.ok) {
+        throw ("Fallo la actualización del envío del carrito");
+    }
+
+}

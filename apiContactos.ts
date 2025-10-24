@@ -49,6 +49,7 @@ export async function postRegisterFromContacto(data: {
     tipDocFacturacion: string;
     telefonoContacto: string;
     urlConfirmacion: string;
+    passWord : string;
 },
     token: string): Promise<any> {
         
@@ -74,7 +75,8 @@ export async function postRegisterFromContacto(data: {
         "nroDocFacturacion": data.nroDocFacturacion,
         "tipDocFacturacion": data.tipDocFacturacion,
         "telefonoContacto": data.telefonoContacto,
-        "urlConfirmacion": data.urlConfirmacion
+        "urlConfirmacion": data.urlConfirmacion,
+        "passWord": data.passWord
     }
 
     const bodyJson = JSON.stringify(body);

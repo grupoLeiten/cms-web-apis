@@ -53,7 +53,6 @@ export const setStylesVista = async ({ request, params, stylesObject, importStri
         headers: {
             "Authorization": token,
             "Content-Type": "application/json",
-
         },
         body: body
     });
