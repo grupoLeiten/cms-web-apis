@@ -15,6 +15,8 @@ export const API_ENDPOINTS_CONTEXT = {
 export const API_ENDPOINT_CONTACTOS = {
     POST_CREAR_CONTACTO: `${API_BASE_URL}/Contactos/ContactoCrear`,
     POST_LOGIN_FROM_CONTACTO: `${API_BASE_URL}/Contactos/LoginFromContacto`,
+    GET_TIPOS_INCRIPCIONES_PARA_FACTURAR : `${API_BASE_URL}/Contactos/GetTiposInscripcionParaFacturar`,
+    GET_DIRECCION_DE_ENTREGA_CLIENTE_CONTACTO : `${API_BASE_URL}/Contactos/GetDireccionesDeEntregaByClientesContacto`,
 }
 
 export const API_ENDPOINT_PROVINCIAS = {

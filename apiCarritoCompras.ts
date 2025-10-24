@@ -7,7 +7,7 @@ import { MercadoPagoConfig, Preference } from 'mercadopago';
 
 
 //NO BORRAR EL TAG DE PRUEBAS
-const tag = "3436";
+const tag = "3435";
 //NO BORRAR EL TAG DE PRUEBAS
 
 export const getWalletMP = async ({ token, shoppingCart }: { token: string, shoppingCart: any }): Promise<any> => {
@@ -75,7 +75,8 @@ export const getCarrito = async ({ token }: { token: string }): Promise<any> => 
         impuestos,
         importeTotal,
         importeSubTotalSinImpuestos,
-        simboloMoneda
+        simboloMoneda,
+        costoEntrega 
     } = carrito;
 
     const productos = [
@@ -83,6 +84,7 @@ export const getCarrito = async ({ token }: { token: string }): Promise<any> => 
         { type: "impuestos", data: impuestos, simboloMoneda },
         { type: "importe", data: importeTotal, simboloMoneda },
         { type: "importeSubTotalSinImpuestos", data: importeSubTotalSinImpuestos, simboloMoneda },
+
     ]
 
     return {
@@ -91,7 +93,7 @@ export const getCarrito = async ({ token }: { token: string }): Promise<any> => 
         enProcesoDePago,
         strUusuario,
         strCliente,
-
+        costoEntrega ,
         productos: itemsWithImage,
         impuestos: impuestos,
         importeTotal: importeTotal,
@@ -272,14 +274,19 @@ export const updateEnvioCarrito = async ({ msgRequest, msgResponse, strDireccion
             "tag": tag,
             "strDireccion": strDireccion,
             "strMetodoEnvio": strMetodoEnvio,
-            "codtoEnvio": codtoEnvio,
-            "msgRequest": msgRequest,
-            "msgResponse": msgResponse
+            "costoEnvio": codtoEnvio,
+            "msgRequest": JSON.stringify(msgRequest),
+            "msgResponse": JSON.stringify(msgResponse)
         })
     });
 
+
+
     if (!response.ok) {
-        throw ("Fallo la actualización del envío del carrito");
+        const errorData = await response.json();
+        throw (errorData?.message || "Fallo la actualización del envío del carrito");
     }
+
+    return { success: true };
 
 }

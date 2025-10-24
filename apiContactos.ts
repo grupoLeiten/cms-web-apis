@@ -1,4 +1,4 @@
-import { API_ENDPOINT_CONTACTOS } from "./apiConfig";
+import { API_ENDPOINT_CONTACTOS, API_ENDPOINT_PROVINCIAS } from "./apiConfig";
 
 export const postLoginFromContacto = async ({ email, passWord, token }: { email: string, passWord: string, token: string }) => {
 
@@ -25,6 +25,47 @@ export const postLoginFromContacto = async ({ email, passWord, token }: { email:
     return data;
 
 }
+
+export const postGetDireccion = async ({ idCliente, idContacto, token }: { idCliente: string, idContacto: string, token: string }) => {
+
+
+    const response = await fetch(`${API_ENDPOINT_CONTACTOS.GET_DIRECCION_DE_ENTREGA_CLIENTE_CONTACTO}?IdContacto=${idContacto}&IdCliente=${idCliente}`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: token
+            },
+        }
+    );
+
+
+    const data = await response.json();
+    return data[0];
+
+}
+
+
+
+export const GetTiposInscripcionParaFacturar = async ({ request, token }: { request: Request, token: string }) => {
+
+
+    const response = await fetch(`${API_ENDPOINT_CONTACTOS.GET_TIPOS_INCRIPCIONES_PARA_FACTURAR}`, {
+        method: "GET",
+        headers: {
+            "Authorization": token
+        }
+    });
+
+    const listaTiposInscripcion = await response.json();
+
+    if (!response.ok) {
+        return [];
+    }
+
+    return listaTiposInscripcion;
+}
+
 
 
 export async function postRegisterFromContacto(data: {
