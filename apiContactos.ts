@@ -45,6 +45,76 @@ export const postGetDireccion = async ({ idCliente, idContacto, token }: { idCli
 
 }
 
+export const postCrearContactoDireccionEntrega = async ({
+    idContacto,
+    idCliente,
+    codPos,
+    strCiudad,
+    strProvincia,
+    localidad,
+    numero,
+    calle,
+    loteo,
+    lng,
+    lat,
+    direccionGeolocalizada,
+    direccionValidadPorGeolocalizacion ,
+    direccionValidadaPorPin,
+    token
+}: {
+    idContacto: number,
+    idCliente: number,
+    codPos: string,
+    strCiudad: string,
+    strProvincia: string,
+    localidad: string,
+    numero: string,
+    calle: string,
+    loteo: string,
+    lng: number,
+    lat: number,
+    direccionGeolocalizada: boolean,
+    direccionValidadPorGeolocalizacion: boolean,
+    direccionValidadaPorPin: boolean,
+    token: string
+}) => {
+
+    const body = {
+        idContacto,
+        idCliente,
+        codPos,
+        strCiudad,
+        strProvincia,
+        localidad,
+        numero,
+        calle,
+        loteo,
+        lng,
+        lat,
+        direccionGeolocalizada,
+        direccionValidadPorGeolocalizacion,
+        direccionValidadaPorPin
+    };
+
+    const bodyJson = JSON.stringify(body);
+
+    const response = await fetch(`${API_ENDPOINT_CONTACTOS.POST_CREAR_DIRECCION_DE_ENTREGA_CLIENTE_CONTACTO}`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: token
+            },
+            body: bodyJson
+        }
+    );
+
+    const data = await response.json();
+    return data;
+}
+
+
+
 
 
 export const GetTiposInscripcionParaFacturar = async ({ request, token }: { request: Request, token: string }) => {

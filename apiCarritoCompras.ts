@@ -76,7 +76,7 @@ export const getCarrito = async ({ token }: { token: string }): Promise<any> => 
         importeTotal,
         importeSubTotalSinImpuestos,
         simboloMoneda,
-        costoEntrega 
+        costoEntrega
     } = carrito;
 
     const productos = [
@@ -93,7 +93,7 @@ export const getCarrito = async ({ token }: { token: string }): Promise<any> => 
         enProcesoDePago,
         strUusuario,
         strCliente,
-        costoEntrega ,
+        costoEntrega,
         productos: itemsWithImage,
         impuestos: impuestos,
         importeTotal: importeTotal,
@@ -196,9 +196,6 @@ export const clearCarrito = async ({ token, tag }: { token: string, tag: string 
             "Authorization": token
         },
     });
-
-
-
 };
 
 
@@ -289,4 +286,106 @@ export const updateEnvioCarrito = async ({ msgRequest, msgResponse, strDireccion
 
     return { success: true };
 
+}
+
+
+
+export const postPrepararPagoCarrito = async ({
+    msgRequest,
+    token
+}: {
+    msgRequest: any,
+    token: string
+}) => {
+
+    const response = await fetch(`${API_ENDPOINT_CARRITO.POST_PREPARAR_PAGO_CARRITO}`, {
+        method: "POST",
+        headers: {
+            "Authorization": token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            "tag": tag,
+            "msgRequest": JSON.stringify(msgRequest),
+        })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw (errorData?.message || "Fallo la preparacion del carrito");
+    }
+
+    return { success: true };
+
+}
+
+export const postRegistratDatosEnvioCarrito = async ({
+    msgRequest,
+    msgResponse,
+    strDireccion,
+    strMetodoEnvio,
+    idDireccionEnvio,
+    costoEnvio,
+    token
+}: {
+    msgRequest: string,
+    msgResponse: string,
+    strDireccion: string,
+    strMetodoEnvio: string,
+    idDireccionEnvio: number,
+    costoEnvio: number,
+    token: string
+}) => {
+
+    const response = await fetch(`${API_ENDPOINT_CARRITO.POST_REGISTRAR_ENVIO_CARRITO}`, {
+        method: "POST",
+        headers: {
+            "Authorization": token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            "tag": tag,
+            "msgRequest": msgRequest,
+            "msgResponse": msgResponse,
+            "strDireccion": strDireccion,
+            "strMetodoEnvio": strMetodoEnvio,
+            "idDireccionEnvio": idDireccionEnvio,
+            "costoEnvio": costoEnvio
+        })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw (errorData?.message || "Fallo la preparacion del envio del carrito");
+    }
+
+    return { success: true };
+}
+
+export const postRegistrarPagoCarrito = async ({
+    msgPago,
+    token
+}: {
+    msgPago: string,
+    token: string
+}) => {
+
+    const response = await fetch(`${API_ENDPOINT_CARRITO.POST_REGISTRAR_ENVIO_CARRITO}`, {
+        method: "POST",
+        headers: {
+            "Authorization": token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            "tag": tag,
+            "msgPago": msgPago
+        })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw (errorData?.message || "Fallo el registro del pago del carrito");
+    }
+
+    return { success: true };
 }

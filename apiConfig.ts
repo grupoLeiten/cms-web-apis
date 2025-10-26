@@ -17,6 +17,7 @@ export const API_ENDPOINT_CONTACTOS = {
     POST_LOGIN_FROM_CONTACTO: `${API_BASE_URL}/Contactos/LoginFromContacto`,
     GET_TIPOS_INCRIPCIONES_PARA_FACTURAR : `${API_BASE_URL}/Contactos/GetTiposInscripcionParaFacturar`,
     GET_DIRECCION_DE_ENTREGA_CLIENTE_CONTACTO : `${API_BASE_URL}/Contactos/GetDireccionesDeEntregaByClientesContacto`,
+    POST_CREAR_DIRECCION_DE_ENTREGA_CLIENTE_CONTACTO : `${API_BASE_URL}/Contactos/ContactoDireccionEntregaCrear`,
 }
 
 export const API_ENDPOINT_PROVINCIAS = {
@@ -66,6 +67,11 @@ export const API_ENDPOINT_CARRITO = {
     REMOVEITEM : `${API_BASE_URL}/CarritoCompras/RemoveItem`,
     CLEAR : `${API_BASE_URL}/CarritoCompras/Clear`,
     ACTUALIZAR_ENVIO : `${API_BASE_URL}/CarritoCompras/SetEnvioCarrito`,
+    //NUEVOS
+    DELETE_CARRITO : `${API_BASE_URL}/CarritoCompras/CancelarPagoCarrito`,
+    POST_PREPARAR_PAGO_CARRITO : `${API_BASE_URL}/CarritoCompras/PrepararPagoCarrito`,
+    POST_REGISTRAR_ENVIO_CARRITO : `${API_BASE_URL}/CarritoCompras/RegistrarDatosEnvioCarrito`,
+    POST_REGISTRAR_PAGO_CARRITO : `${API_BASE_URL}/CarritoCompras/RegitrarPagoCarrito`,
 }
 
 
