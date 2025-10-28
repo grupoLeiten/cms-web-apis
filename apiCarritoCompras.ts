@@ -7,7 +7,7 @@ import { MercadoPagoConfig, Preference } from 'mercadopago';
 
 
 //NO BORRAR EL TAG DE PRUEBAS
-const tag = "3435";
+const tag = "3436";
 //NO BORRAR EL TAG DE PRUEBAS
 
 export const getWalletMP = async ({ token, shoppingCart }: { token: string, shoppingCart: any }): Promise<any> => {
@@ -48,8 +48,8 @@ export const getWalletMP = async ({ token, shoppingCart }: { token: string, shop
 
 const CMS_EDITABLE = import.meta.env.VITE_CMS_EDITABLE === 'true' ? true : false;
 
-export const getCarrito = async ({ token }: { token: string }): Promise<any> => {
-    const response = await fetch(`${API_ENDPOINT_CARRITO.GET}/Tag/${tag}?esVersionEditable=${CMS_EDITABLE}`, {
+export const getCarrito = async ({ token, centOpe }: { token: string, centOpe: string }): Promise<any> => {
+    const response = await fetch(`${API_ENDPOINT_CARRITO.GET}/Tag/${tag}?esVersionEditable=${CMS_EDITABLE}&IdCentOpe=${centOpe}`, {
         headers: {
             "Authorization": token
         }
