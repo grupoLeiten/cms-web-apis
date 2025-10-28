@@ -473,7 +473,11 @@ export const getItems = async (idView, arrayFilterJson, idSucursal = 0, pagina =
 
     noImageDefault = await getImage({ id: noImageDefault, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault, idView, token });
 
-
+    // Validar que data sea un array
+    if (!Array.isArray(data)) {
+        console.error('Data is not an array:', data);
+        return [];
+    }
 
     const dataWithImages = await Promise.all(
         data.map(async (item: any) => {
