@@ -554,14 +554,19 @@ export const getFichaProducto = async ({
 
     const data = await response.json();
 
-
-    const imagen = await Promise.all(
-        data.galeriaFotos.map(async (item: any) => {
-            const image = await fetchImageById({ id: item.idImagen, idView, token });
-            return { ...item, image, alt: "" };
-        })
-    );
-    data.galeriaFotos = imagen;
+    // Verificar que galeriaFotos existe y es un array antes de procesarlo
+    if (data.galeriaFotos && Array.isArray(data.galeriaFotos)) {
+        const imagen = await Promise.all(
+            data.galeriaFotos.map(async (item: any) => {
+                const image = await fetchImageById({ id: item.idImagen, idView, token });
+                return { ...item, image, alt: "" };
+            })
+        );
+        data.galeriaFotos = imagen;
+    } else {
+        // Si no hay galeriaFotos, inicializar como array vacío
+        data.galeriaFotos = [];
+    }
 
     const itemModelWithImage = await Promise.all(
         data.items.map(async (item: any) => {

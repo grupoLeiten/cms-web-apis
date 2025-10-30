@@ -3,12 +3,7 @@ import { API_ENDPOINT_COMPONENTES_DISENIO } from "./apiConfig";
 
 
 
-export const getComponenteByCodigo = async ({ request, codigo }: { request: Request, codigo: string }) => {
-
-    const cookie = request.headers.get("Cookie");
-    const session = await getSession(cookie);
-    const userId = session.get("userId");
-    const { name, token } = JSON.parse(userId || "{}");
+export const getComponenteByCodigo = async ({ request, codigo, token }: { request: Request, codigo: string, token: string }) => {
 
     const response = await fetch(`${API_ENDPOINT_COMPONENTES_DISENIO.GET_BY_CODIGO}/Codigo/${codigo}`, {
         method: "GET",
