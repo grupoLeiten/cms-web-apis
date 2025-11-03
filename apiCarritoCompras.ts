@@ -199,7 +199,7 @@ export const clearCarrito = async ({ token, tag }: { token: string, tag: string 
 };
 
 
-export const removeItemFromCarrito = async ({ token, itemId }: { token: string, itemId: string }) => {
+export const removeItemFromCarrito = async ({ token, itemId, centOpe }: { token: string, itemId: string, centOpe?: string }) => {
 
     const response = await fetch(`${API_ENDPOINT_CARRITO.REMOVEITEM}/TAG/${tag}/idItem/${itemId}`, {
         method: "DELETE",
@@ -213,7 +213,23 @@ export const removeItemFromCarrito = async ({ token, itemId }: { token: string, 
         throw ("Failed to remove item from cart");
     }
 
-    const carrito = await response.json();
+    // Verificar si la respuesta tiene contenido antes de parsear JSON
+    const text = await response.text();
+    
+    // Si la respuesta está vacía (solo 200 OK), recargar el carrito
+    if (!text || text.trim() === "") {
+        // Recargar el carrito después de eliminar el item
+        const centOpeToUse = centOpe || "2"; // Valor por defecto
+        const carritoRecargado = await getCarrito({ token, centOpe: centOpeToUse });
+        return carritoRecargado;
+    }
+
+    let carrito;
+    try {
+        carrito = JSON.parse(text);
+    } catch (error) {
+        throw new Error("Invalid JSON response from server");
+    }
 
     const itemsWithImage = await Promise.all(carrito.carritoActualizado.items.map(async (item: any) => {
         return {
