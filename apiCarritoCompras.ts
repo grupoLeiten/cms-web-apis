@@ -49,22 +49,7 @@ export const getWalletMP = async ({ token, shoppingCart }: { token: string, shop
 const CMS_EDITABLE = import.meta.env.VITE_CMS_EDITABLE === 'true' ? true : false;
 
 export const getCarrito = async ({ token, centOpe }: { token: string, centOpe: string }): Promise<any> => {
-    return {
-        esAnonimo : true,
-        esCliente : false,
-        enProcesoDePago : "",
-        strUusuario : "",
-        strCliente : "",
-        costoEntrega : 232,
-        productos: [],
-        impuestos: [],
-        importeTotal: [],
-        importeSubTotalSinImpuestos: [],
-
-
-        //viejo
-        data: []
-    };
+    
     const response = await fetch(`${API_ENDPOINT_CARRITO.GET}/Tag/${tag}?esVersionEditable=${CMS_EDITABLE}&IdCentOpe=${centOpe}`, {
         headers: {
             "Authorization": token
