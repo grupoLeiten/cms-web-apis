@@ -36,7 +36,9 @@ export const getListaDeObjetos = async ({ idView, token }: { idView: string, tok
 export const getItemsBySearchView = async ({ params, token, searchProduct }: { params: any, token: string, searchProduct: string }) => {
     const { idView } = params;
 
-    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_ITEMS_BY_SEARCH_VIEW}/IdVista/${idView}/PatronBusqueda/${searchProduct}`,
+    const url = `${API_ENDPOINTS_CONTENT_SETTEINGS.GET_ITEMS_BY_SEARCH_VIEW}/IdVista/${idView}/PatronBusqueda/${searchProduct}`;
+
+    const response = await fetch(url,
         {
             method: "GET",
             headers: {
@@ -45,12 +47,66 @@ export const getItemsBySearchView = async ({ params, token, searchProduct }: { p
         }
     );
 
+    const text = await response.text();
 
+    // Intentar parsear
+    let itemsData;
+    try {
+        itemsData = JSON.parse(text);
+    } catch (error) {
+        itemsData = [];
+    }
 
+    // Si no hay items, retornar array vacío
+    const itemsArray = Array.isArray(itemsData) ? itemsData : (itemsData?.data || []);
+    if (itemsArray.length === 0) {
+        return itemsArray;
+    }
 
-    const itemsData = await response.json();
+    // Obtener imágenes para cada item usando idVista=22 y tipoContenido=0
+    const idVistaBusqueda = "22";
+    const idTipoContenido = "0"; // Tipo de contenido 0 por defecto
 
-    return itemsData;
+    const itemsWithImages = await Promise.all(
+        itemsArray.map(async (item: any) => {
+            const itemId = item.id || item.Id || item.idEntity;
+            if (!itemId) {
+                return { ...item, image: null };
+            }
+
+            try {
+                // Llamar directamente al endpoint de imágenes con tipoContenido=0
+                const imageResponse = await fetch(
+                    `${API_ENDPOINTS_CONTENT_SETTEINGS.IMAGE}/Id/${itemId}/TipoContenido/${idTipoContenido}/IdVista/${idVistaBusqueda}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': token
+                        }
+                    }
+                );
+
+                if (!imageResponse.ok) {
+                    return { ...item, image: null };
+                }
+
+                const imageBlob = await imageResponse.blob();
+                const imageArrayBuffer = await imageBlob.arrayBuffer();
+                const imageBase64 = btoa(
+                    new Uint8Array(imageArrayBuffer)
+                        .reduce((data, byte) => data + String.fromCharCode(byte), '')
+                );
+                const image = `data:image/jpeg;base64,${imageBase64}`;
+                
+                return { ...item, image };
+            } catch (error) {
+                return { ...item, image: null };
+            }
+        })
+    );
+
+    return itemsWithImages;
 }
 
 export const getVistas = async ({ token }: { token: string }) => {
