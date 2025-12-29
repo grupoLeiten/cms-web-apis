@@ -1,21 +1,22 @@
-export const ANDREANI_API_URL = "https://apisqa.andreani.com/v1/tarifas";
+// URL base de Andreani desde variable de entorno
+export const ANDREANI_BASE_URL = import.meta.env.VITE_API_BASE_URL_ADREANI || "https://apis.andreani.com";
+export const ANDREANI_API_URL = `${ANDREANI_BASE_URL}/v1/tarifas`;
 export const ANDREANI_CREDENTIALS = {
-  usuario: "testinternoqa_gla",
-  password: "iqVsIeR0q6voXcrs7HDV!",
+  userName: "leiten_gla",
+  password: "y1k3DinIhSJdxDaJNnde@",
 };
 
 export async function getAndreaniToken(): Promise<string | null> {
-  // 🔧 TOKEN FORZADO PARA DESARROLLO - Cambia esto a false para usar autenticación real
-  const USE_FIXED_TOKEN = true;
-  const FIXED_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI5ZjlkY2FiMS00ZGI2LTRiMDMtYmViYS1mNGU0MWNkZDU5ZWEiLCJ1c2VyTmFtZSI6InRlc3RpbnRlcm5vcWFfZ2xhIiwiZ3JvdXBJZCI6ImE0MWMyNTZiLWQ0YzctNGJjMS05MDkyLWMzYWRlZDljMzkxYyIsImlhdCI6MTc2MDYxNDIwNiwiZXhwIjoxNzYwNzAwNjA2fQ.T0NJG2K2AXVg2PO7FYTYLpKqRyVFqlNl_fpqYHCkFvA";
-
-  if (USE_FIXED_TOKEN) {
-    return FIXED_TOKEN;
-  }
-
-  // Autenticación normal
+  // Autenticación con Andreani
+  const loginUrl = `${ANDREANI_BASE_URL}/login`;
+  
+  console.log("🔐 [Andreani Auth] Iniciando autenticación...");
+  console.log("🔐 [Andreani Auth] URL Base:", ANDREANI_BASE_URL);
+  console.log("🔐 [Andreani Auth] Login URL:", loginUrl);
+  console.log("🔐 [Andreani Auth] Usuario:", ANDREANI_CREDENTIALS.userName);
+  
   try {
-    const response = await fetch("https://apisqa.andreani.com/v1/login", {
+    const response = await fetch(loginUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -23,28 +24,48 @@ export async function getAndreaniToken(): Promise<string | null> {
       body: JSON.stringify(ANDREANI_CREDENTIALS),
     });
 
+    console.log("🔐 [Andreani Auth] Response status:", response.status);
+    console.log("🔐 [Andreani Auth] Response statusText:", response.statusText);
+
     if (!response.ok) {
-      console.error("Error al autenticar con Andreani:", response.statusText);
+      const errorBody = await response.text();
+      console.error("❌ [Andreani Auth] Error al autenticar:", response.status, response.statusText);
+      console.error("❌ [Andreani Auth] Error body:", errorBody);
       return null;
     }
 
     const data = await response.json();
-    return data.token || data.access_token || null;
+    console.log("✅ [Andreani Auth] Respuesta recibida:", JSON.stringify(data, null, 2));
+    
+    const token = data.token || data.access_token || null;
+    if (token) {
+      console.log("✅ [Andreani Auth] Token obtenido exitosamente (primeros 50 chars):", token.substring(0, 50) + "...");
+    } else {
+      console.error("❌ [Andreani Auth] No se encontró token en la respuesta. Keys disponibles:", Object.keys(data));
+    }
+    
+    return token;
   } catch (error) {
-    console.error("Error en autenticación Andreani:", error);
+    console.error("❌ [Andreani Auth] Error en autenticación:", error);
     return null;
   }
 }
 
 export async function getCotizacion({ cpDestino, contrato, cliente, volumen }: { cpDestino: string; contrato: string; cliente: string; volumen: string; }) {
+  console.log("💰 [Andreani Cotizador] === INICIANDO COTIZACIÓN ===");
+  console.log("💰 [Andreani Cotizador] cpDestino:", cpDestino);
+  console.log("💰 [Andreani Cotizador] contrato:", contrato);
+  console.log("💰 [Andreani Cotizador] cliente:", cliente);
+  console.log("💰 [Andreani Cotizador] volumen:", volumen);
+  
   const tokenAdreani = await getAndreaniToken();
   const url = new URL(ANDREANI_API_URL);
   url.searchParams.append("cpDestino", cpDestino);
   url.searchParams.append("contrato", contrato);
   url.searchParams.append("cliente", cliente);
   url.searchParams.append("bultos[0][volumen]", volumen);
-  // url.searchParams.append("codigoPostalDestino", "5257");
-
+  
+  console.log("💰 [Andreani Cotizador] URL completa:", url.toString());
 
   const response = await fetch(url.toString(), {
     method: "GET",
@@ -53,12 +74,16 @@ export async function getCotizacion({ cpDestino, contrato, cliente, volumen }: {
     },
   });
 
+  console.log("💰 [Andreani Cotizador] Response status:", response.status);
+  
   const data = await response.json();
+  console.log("💰 [Andreani Cotizador] Respuesta:", JSON.stringify(data, null, 2));
+  
   return data;
 
 }
 
-const ANDREANI_SUCURSALES_URL = "https://apisqa.andreani.com/v2/sucursales";
+const ANDREANI_SUCURSALES_URL = `${ANDREANI_BASE_URL}/v2/sucursales`;
 
 
 
@@ -203,7 +228,7 @@ export const postCrearOrdenEnvio = async () => {
     throw new Error("No se pudo obtener el token de autenticación de Andreani");
   }
 
-  const response = await fetch(`https://apisqa.andreani.com/v2/ordenes-de-envio`, {
+  const response = await fetch(`${ANDREANI_BASE_URL}/v2/ordenes-de-envio`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

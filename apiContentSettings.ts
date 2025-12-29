@@ -237,10 +237,20 @@ const _getIdTipoContenido = async (tipo: string, token: string) => {
 
     const data = await getTiposContenido1({ token });
 
-    const TipoContenido = data.find((item: any) => {
+    // Asegurarse de que data sea un array
+    const dataArray = Array.isArray(data) ? data : (data?.data || data?.tiposContenido || []);
 
+    if (!Array.isArray(dataArray) || dataArray.length === 0) {
+        throw new Error(`No se encontraron tipos de contenido o la respuesta no es válida`);
+    }
+
+    const TipoContenido = dataArray.find((item: any) => {
         return item.nombre === tipo;
-    }, {});
+    });
+
+    if (!TipoContenido) {
+        throw new Error(`No se encontró el tipo de contenido: ${tipo}`);
+    }
 
     cache.set("tipo", TipoContenido.idTipoContenido);
 
@@ -660,4 +670,19 @@ export const getImagenAsDownload = async ({ id, token }: { id: string, token: st
     } catch (error) {
         throw new Error("Fallo la conexion.");
     }
+}
+
+export const getTextoByCodigo = async ({ codigo, token }: { codigo: string, token: string }) => {
+    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_TEXTO_BY_CODIGO}/${codigo}`,
+        {
+            method: "GET",
+            headers: {
+                Authorization: token
+            }
+        }
+    );
+
+    // La API devuelve texto plano, no JSON
+    const data = await response.text();
+    return data;
 }

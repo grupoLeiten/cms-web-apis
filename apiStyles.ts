@@ -1,7 +1,8 @@
 
 //CONFIG
 import { API_ENDPOINT_STYLES } from "~/cms-web-apis/apiConfig";
-import { getSession } from "~/servicies/session.server";
+// import { getSession } from "~/servicies/session.server";
+import { getUserSession } from "~/servicies/userSession.server";
 //SESION
 function isJsonParseable(str: string): boolean {
     try {
@@ -31,17 +32,27 @@ export const getStylesVista = async ({ params, token }: { params: any, token: st
         styleObject2 = JSON.parse(styleObject2);
     }
 
-    const style = { styleObject: styleObject2, importString: manipular.importContent };
+    let importString = manipular.importContent ?? "";
+    while (typeof importString === "string" && isJsonParseable(importString)) {
+        const parsed = JSON.parse(importString);
+        if (typeof parsed === "string") {
+            importString = parsed;
+        } else {
+            break;
+        }
+    }
+
+    const style = { styleObject: styleObject2, importString };
     return style;
 
 }
 
 export const setStylesVista = async ({ request, params, stylesObject, importString }: { request: Request, params: any, stylesObject: any, importString: any }) => {
-    const cookie = request.headers.get("Cookie");
-    const session = await getSession(cookie);
-    const userId = session.get("userId");
-    const { name, token } = JSON.parse(userId || "{}");
-
+    // const cookie = request.headers.get("Cookie");
+    // const session = await getSession(cookie);
+    // const userId = session.get("userId");
+    // const { name, token } = JSON.parse(userId || "{}");
+    const userData = await getUserSession(request);
 
     const idView = params.idView;
 
@@ -51,7 +62,7 @@ export const setStylesVista = async ({ request, params, stylesObject, importStri
 
         method: "POST",
         headers: {
-            "Authorization": token,
+            "Authorization": userData?.token as string,
             "Content-Type": "application/json",
         },
         body: body

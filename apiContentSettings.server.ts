@@ -1,6 +1,6 @@
-import { API_ENDPOINTS_CONTENT_SETTEINGS, API_ENDPOINTS_PRODUCTOS } from "~/cms-web-apis/apiConfig";
-import { DEFAULT_IMAGE_BASE64_STRING } from "~/cms-web-components/config/imageConfig";
+import { API_ENDPOINTS_CONTENT_SETTEINGS, API_ENDPOINTS_PRODUCTOS, API_SERVICE_IMAGE_URL } from "~/cms-web-apis/apiConfig";
 import { TIPO_CONTENIDO_CONFIG } from "../cms-web-components/config/tipoContenidoConfig";
+import { getDirectLink } from "./utils";
 
 export const getVista = async ({ params, token }: { params: any, token: string }) => {
 
@@ -98,7 +98,7 @@ export const getItemsBySearchView = async ({ params, token, searchProduct }: { p
                         .reduce((data, byte) => data + String.fromCharCode(byte), '')
                 );
                 const image = `data:image/jpeg;base64,${imageBase64}`;
-                
+
                 return { ...item, image };
             } catch (error) {
                 return { ...item, image: null };
@@ -126,24 +126,6 @@ export const getVistas = async ({ token }: { token: string }) => {
     const vistasData = await response.json();
 
     return vistasData;
-}
-
-export const getDefinirProductos = async ({ params, token }: { params: any, token: string }) => {
-
-    const response = await fetch(`${API_ENDPOINTS_PRODUCTOS.SEARCH}/PatronBusqueda/${search}`,
-        {
-            method: "GET",
-            headers: {
-                Authorization: token
-            }
-        }
-    );
-
-
-
-
-    const productosData = await response.json();
-    return productosData;
 }
 
 export const getActionVista = async ({ params, token }: { params: any, token: string }) => {
@@ -179,6 +161,10 @@ export const getParametros = async ({ params, token }: { params: any, token: str
             }
         }
     );
+
+    if (!response.ok) {
+        return { success: false, message: "Error al obtener los parámetros - " + response.statusText };
+    }
 
     const vistasData = await response.json();
 
@@ -235,10 +221,19 @@ export const getMenuGrid = async ({ params, token }: { params: any, token: strin
 
 }
 
-export const getMenu = async ({ params, token }: { params: any, token: string }) => {
+export const getMenu = async ({ request, params, token }: { request: Request, params: any, token: string }) => {
 
     const { idView, idMenu } = params;
 
+    // Validar que idMenu esté presente
+    if (!idMenu) {
+        return {
+            title: "",
+            menus: [],
+            multimedia: false,
+            chip: { textoToHome: "", actionHome: "" }
+        };
+    }
 
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.MENU}/IdVista/${idView}/IdMenu/${idMenu}`,
         {
@@ -251,24 +246,46 @@ export const getMenu = async ({ params, token }: { params: any, token: string })
 
     const menus = await response.json();
 
+    // Validar que la respuesta tenga la estructura esperada
+    if (!menus || !menus.menuItems || !Array.isArray(menus.menuItems)) {
+        return {
+            title: menus?.title || "",
+            menus: [],
+            multimedia: menus?.menuContieneImagenes || false,
+            chip: { textoToHome: menus?.textoToHome || "", actionHome: menus?.actionHome || "" }
+        };
+    }
+
     const title = menus.title;
     const multimedia = menus.menuContieneImagenes;
 
     const menuItems = await Promise.all(menus.menuItems.map(async (item: any) => {
-        const subItems = await Promise.all(item.menuItems.map(async (subItem: any) => {
-            // TODO: Implement return object for subItem if needed
-            return {
-                ...subItem,
-                image: multimedia ? await getImage({ id: subItem.id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: idView, token }) : null,
-            };
-        }));
+        // Validar que item.menuItems exista y sea un array
+        const subItems = item.menuItems && Array.isArray(item.menuItems)
+            ? await Promise.all(item.menuItems.map(async (subItem: any) => {
+                // TODO: Implement return object for subItem if needed
+                const isView = subItem.action ? subItem.action.toLowerCase().startsWith("vista") : "";
+                const idView = subItem.action ? subItem.action.split(":")[1] : "";
+
+                return {
+                    ...subItem,
+                    image: multimedia && idView ? await getImage({ id: subItem.id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: idView, token }) : null,
+                    urlDirect: isView && idView ? await getDirectLink({ request, idView, idMenu: "1", token }) : ""
+                };
+            }))
+            : [];
+
+        const isView = item.action ? item.action.toLowerCase().startsWith("vista") : "";
+        const idView = item.action ? item.action.split(":")[1] : "";
+
         return {
             ...item,
-            menuItems: subItems
+            menuItems: subItems,
+            urlDirect: isView && idView ? await getDirectLink({ request, idView, idMenu: "1", token }) : ""
         };
     }));
 
-    return { title, menus: menuItems, multimedia, chip: { textoToHome: menus.textoToHome, actionHome: menus.actionHome } };
+    return { title, menus: menuItems, multimedia, chip: { textoToHome: menus.textoToHome || "", actionHome: menus.actionHome || "" } };
 }
 
 
@@ -293,10 +310,20 @@ const _getIdTipoContenido = async (tipo: string, token: string) => {
 
     const data = await getTiposContenido1({ token });
 
-    const TipoContenido = data.find((item: any) => {
+    // Asegurarse de que data sea un array
+    const dataArray = Array.isArray(data) ? data : (data?.data || data?.tiposContenido || []);
 
+    if (!Array.isArray(dataArray) || dataArray.length === 0) {
+        throw new Error(`No se encontraron tipos de contenido o la respuesta no es válida`);
+    }
+
+    const TipoContenido = dataArray.find((item: any) => {
         return item.nombre === tipo;
-    }, {});
+    });
+
+    if (!TipoContenido) {
+        throw new Error(`No se encontró el tipo de contenido: ${tipo}`);
+    }
 
     cache.set("tipo", TipoContenido.idTipoContenido);
 
@@ -318,29 +345,7 @@ export const getImage = async ({
 }) => {
 
     const idTipoContenido = await _getIdTipoContenido(tipoContenido, token);
-
-    try {
-        const imageResponse = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.IMAGE}/Id/${id}/TipoContenido/${idTipoContenido}/IdVista/${idView}`, {
-            method: "GET",
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token
-            }
-        });
-        const imageBlob = await imageResponse.blob();
-        const imageArrayBuffer = await imageBlob.arrayBuffer();
-        const imageBase64 = btoa(
-            new Uint8Array(imageArrayBuffer)
-                .reduce((data, byte) => data + String.fromCharCode(byte), '')
-        );
-        if (!imageResponse.ok) {
-            return noImageDefault;
-        }
-        const image = `data:image/jpeg;base64,${imageBase64}`;
-        return image;
-    } catch (error) {
-        return noImageDefault;
-    }
+    return `${API_SERVICE_IMAGE_URL}/imagen/${id}/${idTipoContenido}`;
 }
 
 
@@ -360,7 +365,7 @@ export const getDefinirProductosaAction = async ({ search, token }: { search: an
     return productosData;
 }
 
-export const getContenidoFichaSucursalItem = async ({ idView, token }) => {
+export const getContenidoFichaSucursalItem = async ({ idView, token }: { idView: string; token: string }) => {
 
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_CONTENIDO_FICHA_SUCURSAL_ITEM}?IdVista=${idView}`,
         {
@@ -371,13 +376,18 @@ export const getContenidoFichaSucursalItem = async ({ idView, token }) => {
         }
     );
 
+    if (!response.ok) {
+        return [];
+    }
 
     const data = await response.text();
     const json = JSON.parse(data);
-    return json;
+
+    // Asegurar que siempre devuelva un array
+    return Array.isArray(json) ? json : [];
 }
 
-export const getAtributosCMS = async ({ idView, idMenu, arrayFilterJson, token }: { idView: string, idMenu: string, arrayFilterJson: string, token: string }) => {
+export const getAtributosCMS = async ({ idView, idMenu, arrayFilterJson, token }: { idView: string; idMenu: string; arrayFilterJson: string; token: string }) => {
 
 
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_ATRIBUTOS_CMS}?IdVista=${idView}&Id=${idMenu}`,
@@ -408,10 +418,26 @@ export const postCarruselConfig = async ({ idVista, token, noImageDefault }: { i
         },
     });
 
+    if (!response.ok) {
+        return {
+            arrows: false,
+            activeView: 0,
+            automaticViewChange: false,
+            automaticViewChangeInterval: 0,
+            endless: false,
+            pageable: false,
+            pagerOverlay: false,
+            items: []
+        };
+    }
+
     const carruselData = await response.json();
 
+    // Check if Items exists and is an array before mapping
+    const items = Array.isArray(carruselData?.Items) ? carruselData.Items : [];
+
     const responseWithImages = await Promise.all(
-        carruselData.Items.map(async (item: any) => {
+        items.map(async (item: any) => {
             const { IdItem } = item;
             const image = await getImage({ id: IdItem, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenBanner, noImageDefault, idView: idVista, token });
             return { ...item, image };
@@ -420,13 +446,13 @@ export const postCarruselConfig = async ({ idVista, token, noImageDefault }: { i
 
 
     const carruselDataFix = {
-        arrows: carruselData.Arrows,
-        activeView: carruselData.ActiveView,
-        automaticViewChange: carruselData.AutomaticViewChange,
-        automaticViewChangeInterval: carruselData.AutomaticViewChangeInterval,
-        endless: carruselData.Endless,
-        pageable: carruselData.Pageable,
-        pagerOverlay: carruselData.PagerOverlay,
+        arrows: carruselData?.Arrows ?? false,
+        activeView: carruselData?.ActiveView ?? 0,
+        automaticViewChange: carruselData?.AutomaticViewChange ?? false,
+        automaticViewChangeInterval: carruselData?.AutomaticViewChangeInterval ?? 0,
+        endless: carruselData?.Endless ?? false,
+        pageable: carruselData?.Pageable ?? false,
+        pagerOverlay: carruselData?.PagerOverlay ?? false,
         items: responseWithImages
     }
     // carruselData.Items = responseWithImages;
@@ -436,7 +462,7 @@ export const postCarruselConfig = async ({ idVista, token, noImageDefault }: { i
 };
 
 
-export const getBannersVista = async ({ idVista, token, noImageDefault }: { idVista: string, token: string, noImageDefault: string | null }) => {
+export const getBannersVista = async ({ idVista, token, noImageDefault }: { idVista: string; token: string; noImageDefault: string | null }) => {
 
 
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_BANNER_VISTA}?IdVista=${idVista}`,
@@ -447,6 +473,10 @@ export const getBannersVista = async ({ idVista, token, noImageDefault }: { idVi
             }
         }
     );
+
+    if (!response.ok) {
+        return [];
+    }
 
 
     const { Banners } = await response.json();
@@ -463,7 +493,7 @@ export const getBannersVista = async ({ idVista, token, noImageDefault }: { idVi
 }
 
 
-export const getVideosVista = async ({ idVista, token }: { idVista: string, token: string }) => {
+export const getVideosVista = async ({ idVista, token }: { idVista: string; token: string }) => {
 
     const response = await fetch(
         `${API_ENDPOINTS_CONTENT_SETTEINGS.GET_VIDOES_VISTA}?IdVista=${idVista}`,
@@ -512,7 +542,7 @@ export const getVideosVista = async ({ idVista, token }: { idVista: string, toke
 };
 
 
-export const getItems = async (idView, arrayFilterJson, idSucursal = 0, pagina = 0, ItemsPorPagina = 0, token, noImageDefault) => {
+export const getItems = async (request, action, idView, arrayFilterJson, idSucursal = 0, pagina = 0, ItemsPorPagina = 0, token, noImageDefault) => {
 
 
 
@@ -525,17 +555,43 @@ export const getItems = async (idView, arrayFilterJson, idSucursal = 0, pagina =
         body: JSON.stringify(arrayFilterJson)
     });
 
-    const data = await response.json();
+    const text = await response.text();
 
-    noImageDefault = await getImage({ id: noImageDefault, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault, idView, token });
+    let payload: any;
+    try {
+        payload = JSON.parse(text);
+    } catch {
+        payload = [];
+    }
 
+    const itemsArray = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+            ? payload.data
+            : Array.isArray(payload?.items)
+                ? payload.items
+                : Array.isArray(payload?.Items)
+                    ? payload.Items
+                    : [];
 
+    if (noImageDefault) {
+        noImageDefault = await getImage({ id: noImageDefault, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault, idView, token });
+    }
 
+    const isView = action ? action.toLowerCase().startsWith("vista") : "";
+    const idViewAction = action.split(":")[1];
     const dataWithImages = await Promise.all(
-        data.map(async (item: any) => {
+        itemsArray.map(async (item: any) => {
             const { id } = item;
+
+            const urlDirect = isView ? await getDirectLink({ request, idView: idViewAction, idMenu: "1", token, idEntity: id }) : "";
             const image = await getImage({ id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault, idView, token });
-            return { ...item, image };
+
+            return {
+                ...item,
+                image,
+                urlDirect
+            };
         })
     );
 
@@ -543,7 +599,7 @@ export const getItems = async (idView, arrayFilterJson, idSucursal = 0, pagina =
 }
 
 
-export const getContenidoFichaItem = async (idView, token) => {
+export const getContenidoFichaItem = async (idView: string, token: string) => {
 
 
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_CONTENIDO_FICHA_ITEM}?IdVista=${idView}`,
@@ -562,28 +618,28 @@ export const getContenidoFichaItem = async (idView, token) => {
 }
 
 export const fetchImageById = async ({ id, idView, token }: { id: number, idView: number, token: string }) => {
+    return `${API_SERVICE_IMAGE_URL}/imagen/${id}/IdView/${idView}`;
+    // const imageResponse = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_IMAGEN_BY_ID_IMAGEN}/Id/${id}/IdVista/${idView}`, {
+    //     method: "GET",
+    //     headers: {
+    //         'Content-Type': 'application/json',
+    //         'Authorization': token
+    //     }
+    // }
+    // );
 
-    const imageResponse = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_IMAGEN_BY_ID_IMAGEN}/Id/${id}/IdVista/${idView}`, {
-        method: "GET",
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token
-        }
-    }
-    );
+    // if (!imageResponse.ok) {
+    //     return `data:image/png;base64,${DEFAULT_IMAGE_BASE64_STRING}`;
+    // }
+    // const imageBlob = await imageResponse.blob();
+    // const imageArrayBuffer = await imageBlob.arrayBuffer();
+    // const imageBase64 = btoa(
+    //     new Uint8Array(imageArrayBuffer)
+    //         .reduce((data, byte) => data + String.fromCharCode(byte), '')
+    // );
+    // const image = `data:image/jpeg;base64,${imageBase64}`;
 
-    if (!imageResponse.ok) {
-        return `data:image/png;base64,${DEFAULT_IMAGE_BASE64_STRING}`;
-    }
-    const imageBlob = await imageResponse.blob();
-    const imageArrayBuffer = await imageBlob.arrayBuffer();
-    const imageBase64 = btoa(
-        new Uint8Array(imageArrayBuffer)
-            .reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
-    const image = `data:image/jpeg;base64,${imageBase64}`;
-
-    return image;
+    // return image;
 
 }
 
@@ -598,7 +654,7 @@ export const getFichaProducto = async ({
 }) => {
 
     const response = await fetch(
-        `${API_ENDPOINTS_CONTENT_SETTEINGS.GET_FICHA_PRODUCTO}?IdVista=${idView}&IdEntity=${idProducto}`,
+        `${API_ENDPOINTS_CONTENT_SETTEINGS.GET_FICHA_PRODUCTO}?IdVista=${Number(idView)}&IdEntity=${idProducto}`,
         {
             method: "GET",
             headers: {
@@ -612,17 +668,38 @@ export const getFichaProducto = async ({
 
     // Verificar que galeriaFotos existe y es un array antes de procesarlo
     if (data.galeriaFotos && Array.isArray(data.galeriaFotos)) {
-        const imagen = await Promise.all(
-            data.galeriaFotos.map(async (item: any) => {
-                const image = await fetchImageById({ id: item.idImagen, idView, token });
-                return { ...item, image, alt: "" };
-            })
-        );
+        const imagen: any[] = data.galeriaFotos.map((item: any) => {
+            return { ...item, image: `${API_SERVICE_IMAGE_URL}/imagen/${item.idImagen}/IdView/${idView}`, alt: "" };
+        });
+
         data.galeriaFotos = imagen;
     } else {
         // Si no hay galeriaFotos, inicializar como array vacío
         data.galeriaFotos = [];
     }
+
+
+    if (data?.otrasImagenes1) {
+        data.otrasImagenes1 = data.otrasImagenes1.map((imagen: any) => {
+            return { image: `${API_SERVICE_IMAGE_URL}/imagen/${imagen}/IdView/${idView}`, alt: "" };
+        });
+        data.otrasImagenes1 = data.otrasImagenes1;
+    }
+    if (data?.otrasImagenes2) {
+        data.otrasImagenes2 = data.otrasImagenes2.map((imagen: any) => {
+            
+            return { image: `${API_SERVICE_IMAGE_URL}/imagen/${imagen}/IdView/${idView}`, alt: "" };
+        });
+
+    }
+    if (data?.otrasImagenes3) {
+        data.otrasImagenes3 = data.otrasImagenes3.map((imagen: any) => {
+            
+            return { image: `${API_SERVICE_IMAGE_URL}/imagen/${imagen}/IdView/${idView}`, alt: "" };
+        });
+
+    }
+
 
     const itemModelWithImage = await Promise.all(
         data.items.map(async (item: any) => {
@@ -630,21 +707,6 @@ export const getFichaProducto = async ({
                 return item;
             }
 
-            // ✅ DESCARGABLES (PDFs)
-            // if (item.tipoContenido === "Descargables") {
-            //     const contenidosWithPDF = await Promise.all(
-            //         item.contenidos.map(async (subItem: any) => {
-            //             const documento = await getImagenAsDownload({
-            //                 id: subItem.idImagen,
-            //                 token
-            //             });
-            //             return { ...subItem, documento };
-            //         })
-            //     );
-            //     return { ...item, contenidos: contenidosWithPDF };
-            // }
-
-            // ✅ OTROS (con imagen)
             const contenidosWithImages = await Promise.all(
                 item.contenidos.map(async (subItem: any) => {
                     const image = await getImage({
@@ -678,11 +740,11 @@ export const getFichaProducto = async ({
             items: galeriaFotos
         },
         tabPositions,
-        itemModel,
+        itemModel, 
         nombre: itemBaseModel.nombre,
         codigo: itemBaseModel.codigo,
         items,
-        itemBaseModel,
+        itemBaseModel : {...itemBaseModel, image : galeriaFotos[0].image},
         templateNombre,
         templateCodigo,
         boxItems: aux2,
@@ -747,4 +809,42 @@ export async function getImagenAsDownload({ id, token }: { id: string, token: st
             ...(contentLength ? { "Content-Length": contentLength } : {}),
         },
     });
+}
+
+export async function getImagenAsPreview({ id, token }: { id: string, token: string }) {
+    try {
+        const url = `${API_ENDPOINTS_CONTENT_SETTEINGS.GET_IMAGEN_AS_DOWNLOAD}/Id/${id}`;
+        const res = await fetch(url, {
+            method: "GET",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token
+            }
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text().catch(() => '');
+            console.error(`Error al obtener PDF preview: ${res.status} ${res.statusText}`, errorText);
+            throw new Error(`No se pudo obtener el archivo: ${res.status} ${res.statusText}`);
+        }
+
+        const buffer = await res.arrayBuffer();
+        // Forzar el Content-Type a application/pdf para que el navegador lo muestre correctamente
+        const contentType = "application/pdf";
+        const contentLength = res.headers.get("content-length");
+
+        // Usar "inline" en lugar de "attachment" para que el navegador muestre el PDF
+        return new Response(Buffer.from(buffer), {
+            status: 200,
+            headers: {
+                "Content-Type": contentType,
+                "Content-Disposition": "inline",
+                "X-Content-Type-Options": "nosniff",
+                ...(contentLength ? { "Content-Length": contentLength } : {}),
+            },
+        });
+    } catch (error: any) {
+        console.error("Error en getImagenAsPreview:", error);
+        throw error;
+    }
 }
