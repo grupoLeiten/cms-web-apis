@@ -537,3 +537,55 @@ export const postRegistrarPagoCarrito = async ({
 
     return { success: true };
 }
+
+
+
+export const PostRegistrarDatosPreEnvioCarrito = async ({
+    token,
+    tag,
+    msgRequest,
+    msgResponse
+}: {    
+    token: string,
+    tag: string,
+    msgRequest: any,
+    msgResponse: any
+}) => {
+    const response = await fetch(`${API_ENDPOINT_CARRITO.POST_REGISTRAR_DATOS_PRE_ENVIO_CARRITO}`, {
+        method: "POST",
+        headers: {
+            "Authorization": token,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            tag: tag,
+            msgRequest: msgRequest,
+            msgResponse: msgResponse,
+          })
+    });
+}
+
+export const PostRegistrarDatosEnvioCarrito = async ({
+    token,
+    tag,
+    msgRequest,
+    msgResponse
+}: {    
+    token: string,
+    tag: string,
+    msgRequest: any,
+    msgResponse: any
+}) => {
+    const response = await fetch(`${API_ENDPOINT_CARRITO.POST_REGISTRAR_DATOS_PRE_ENVIO_CARRITO}`, {
+        method: "POST",
+        headers: {
+            "Authorization": token,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            tag: tag,
+            msgRequest: msgRequest,
+            msgResponse: msgResponse,
+          })
+    });
+}

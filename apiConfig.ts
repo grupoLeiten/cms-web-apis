@@ -79,6 +79,9 @@ export const API_ENDPOINT_CARRITO = {
     POST_REGISTRAR_ENVIO_CARRITO : `${API_BASE_URL}/CarritoCompras/RegistrarDatosEnvioCarrito`,
     POST_REGISTRAR_PAGO_CARRITO : `${API_BASE_URL}/CarritoCompras/RegitrarPagoCarrito`,
     GET_COMPONENTE_TO_VISTA : `${API_BASE_URL}/CarritoCompras/GetCarritoComponenteToVista`,
+    POST_REGISTRAR_DATOS_PRE_ENVIO_CARRITO : `${API_BASE_URL}/CarritoCompras/RegistrarDatosPreEnvioCarrito`,
+    POST_REGISTRAR_DATOS_ENVIO_CARRITO : `${API_BASE_URL}/CarritoCompras/RegistrarDatosEnvioCarrito`,
+    POST_REGISTRAR_COTIZACION : `${API_BASE_URL}/CarritoCompras/RegistrarCotizacionEnvioCarrito`,
 }
 
 
