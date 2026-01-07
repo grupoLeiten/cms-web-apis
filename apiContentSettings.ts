@@ -684,5 +684,5 @@ export const getTextoByCodigo = async ({ codigo, token }: { codigo: string, toke
 
     // La API devuelve texto plano, no JSON
     const data = await response.text();
-    return data;
+    return { buttonText: data };
 }

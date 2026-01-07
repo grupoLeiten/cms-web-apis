@@ -1,8 +1,10 @@
 import { API_ENDPOINTS_CONTENT_SETTEINGS, API_ENDPOINTS_PRODUCTOS, API_SERVICE_IMAGE_URL } from "~/cms-web-apis/apiConfig";
 import { TIPO_CONTENIDO_CONFIG } from "../cms-web-components/config/tipoContenidoConfig";
 import { getDirectLink } from "./utils";
+import { SearchParamsManagment } from "~/cms-web-components/utils/searchParams";
+import { getStylesVista } from "./apiStyles";
 
-export const getVista = async ({ params, token }: { params: any, token: string }) => {
+export const getVistaBORRAR = async ({ params, token }: { params: any, token: string }) => {
 
     const { idView } = params;
 
@@ -19,9 +21,26 @@ export const getVista = async ({ params, token }: { params: any, token: string }
     return vistasData;
 }
 
+export const getVista = async ({ params, token }: { params: any, token: string }) => {
 
-export const getListaDeObjetos = async ({ idView, token }: { idView: string, token: string }) => {
+    const { idView } = params;
 
+    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_VISTA}/IdVista/${idView}`,
+        {
+            method: "GET",
+            headers: {
+                Authorization: token
+            }
+        }
+    );
+
+    const vistasData = await response.json();
+    return { vistaData: vistasData };
+}
+
+
+export const getListaDeObjetos = async ({ params, token }: { params: any, token: string }) => {
+    const { idView } = params;
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.LISTA_DE_OBJETOS}?IdVista=${idView}`,
         {
             method: "GET",
@@ -31,7 +50,7 @@ export const getListaDeObjetos = async ({ idView, token }: { idView: string, tok
         }
     );
     const data = await response.json();
-    return data.ListaDeObjetos;
+    return {listaDeObjetos : data.ListaDeObjetos};
 }
 export const getItemsBySearchView = async ({ params, token, searchProduct }: { params: any, token: string, searchProduct: string }) => {
     const { idView } = params;
@@ -132,8 +151,6 @@ export const getActionVista = async ({ params, token }: { params: any, token: st
 
     const { idView } = params;
 
-
-
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_VISTA}/IdVista/${idView}`,
         {
             method: "GET",
@@ -143,10 +160,9 @@ export const getActionVista = async ({ params, token }: { params: any, token: st
         }
     );
 
-
     const vistasData = await response.json();
 
-    return vistasData.action;
+    return { action: vistasData.action };
 }
 
 export const getParametros = async ({ params, token }: { params: any, token: string }) => {
@@ -176,10 +192,22 @@ export const getParametros = async ({ params, token }: { params: any, token: str
         action: vistasData.action,
         noImageDefault: noImageDefault,
         onGoToHomeAction: vistasData.onGotoHomeAction,
-        onGoToSearchAction: vistasData.onSearchResultAction
+        onSearchResultAction: vistasData.onSearchResultAction
     };
 }
 
+export const getUrlDirectOnGoToHome = async ({ request, params, token }: { request: Request, params: any, token: string }) => {
+    const { onGoToHomeAction } = await getParametros({ params, token });
+    
+    if (!onGoToHomeAction) {
+        return { onGoToHomeAction: "" };
+    }
+    
+    const idView = onGoToHomeAction.split(":")[1];
+    const onGoToHomeActionUrl = await getDirectLink({ request, idView, idMenu: "1", token });
+    
+    return { onGoToHomeAction: onGoToHomeActionUrl };
+}
 
 export const getVistaTemplateName = async ({ params, token }: { params: any, token: string }) => {
 
@@ -217,7 +245,7 @@ export const getMenuGrid = async ({ params, token }: { params: any, token: strin
 
     const data = await response.json();
 
-    return data;
+    return { dataGetMenuGridData: data };
 
 }
 
@@ -227,12 +255,12 @@ export const getMenu = async ({ request, params, token }: { request: Request, pa
 
     // Validar que idMenu esté presente
     if (!idMenu) {
-        return {
+        return { dataMenu: {
             title: "",
             menus: [],
             multimedia: false,
             chip: { textoToHome: "", actionHome: "" }
-        };
+        }};
     }
 
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.MENU}/IdVista/${idView}/IdMenu/${idMenu}`,
@@ -248,12 +276,12 @@ export const getMenu = async ({ request, params, token }: { request: Request, pa
 
     // Validar que la respuesta tenga la estructura esperada
     if (!menus || !menus.menuItems || !Array.isArray(menus.menuItems)) {
-        return {
+        return { dataMenu: {
             title: menus?.title || "",
             menus: [],
             multimedia: menus?.menuContieneImagenes || false,
             chip: { textoToHome: menus?.textoToHome || "", actionHome: menus?.actionHome || "" }
-        };
+        }};
     }
 
     const title = menus.title;
@@ -285,7 +313,7 @@ export const getMenu = async ({ request, params, token }: { request: Request, pa
         };
     }));
 
-    return { title, menus: menuItems, multimedia, chip: { textoToHome: menus.textoToHome || "", actionHome: menus.actionHome || "" } };
+    return { dataMenu: { title, menus: menuItems, multimedia, chip: { textoToHome: menus.textoToHome || "", actionHome: menus.actionHome || "" } } };
 }
 
 
@@ -365,8 +393,9 @@ export const getDefinirProductosaAction = async ({ search, token }: { search: an
     return productosData;
 }
 
-export const getContenidoFichaSucursalItem = async ({ idView, token }: { idView: string; token: string }) => {
+export const getContenidoFichaSucursalItem = async ({ params, token }: { params: any; token: string }) => {
 
+    const { idView } = params;
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_CONTENIDO_FICHA_SUCURSAL_ITEM}?IdVista=${idView}`,
         {
             method: "GET",
@@ -377,19 +406,29 @@ export const getContenidoFichaSucursalItem = async ({ idView, token }: { idView:
     );
 
     if (!response.ok) {
-        return [];
+        return { centroDeOperacionHtml: [] };
     }
 
     const data = await response.text();
     const json = JSON.parse(data);
 
     // Asegurar que siempre devuelva un array
-    return Array.isArray(json) ? json : [];
+    return { dataGetContenidoFichaSucursalItem: Array.isArray(json) ? json : [] };
 }
 
-export const getAtributosCMS = async ({ idView, idMenu, arrayFilterJson, token }: { idView: string; idMenu: string; arrayFilterJson: string; token: string }) => {
+export const getAtributosCMS = async ({ params, token, request, idMenu = "1", arrayFilterJson }: { 
+    params: any; 
+    token: string; 
+    request: Request;
+    idMenu?: string; 
+    arrayFilterJson?: string 
+}) => {
+    // Si no se pasan filtros, obtenerlos del URL
+    const filters = arrayFilterJson ?? JSON.stringify(
+        SearchParamsManagment.getSearchParamsArrayFilterERP(request.url)
+    );
 
-
+    const idView = params.idView ?? '';
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_ATRIBUTOS_CMS}?IdVista=${idView}&Id=${idMenu}`,
         {
             method: "POST",
@@ -397,19 +436,20 @@ export const getAtributosCMS = async ({ idView, idMenu, arrayFilterJson, token }
                 "Content-Type": "application/json",
                 Authorization: token
             },
-            body: arrayFilterJson
+            body: filters
         }
     );
 
-
     const data = await response.json();
-    return data;
+    return { dataAtributos: data };
 
 }
 
-export const postCarruselConfig = async ({ idVista, token, noImageDefault }: { idVista: string, token: string, noImageDefault: string | null }) => {
+export const postCarruselConfig = async ({ params, token }: { params: any, token: string }) => {
+    // Obtener noImageDefault internamente
+    const { noImageDefault } = await getParametros({ params, token });
 
-
+    const idVista = params.idView ?? '';
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.POST_CARRUSEL}?IdVista=${idVista}`, {
         method: 'POST',
         headers: {
@@ -419,7 +459,7 @@ export const postCarruselConfig = async ({ idVista, token, noImageDefault }: { i
     });
 
     if (!response.ok) {
-        return {
+        return { carruselData: {
             arrows: false,
             activeView: 0,
             automaticViewChange: false,
@@ -428,7 +468,7 @@ export const postCarruselConfig = async ({ idVista, token, noImageDefault }: { i
             pageable: false,
             pagerOverlay: false,
             items: []
-        };
+        }};
     }
 
     const carruselData = await response.json();
@@ -457,14 +497,16 @@ export const postCarruselConfig = async ({ idVista, token, noImageDefault }: { i
     }
     // carruselData.Items = responseWithImages;
 
-    return carruselDataFix;
+    return { carruselData: carruselDataFix };
 
 };
 
 
-export const getBannersVista = async ({ idVista, token, noImageDefault }: { idVista: string; token: string; noImageDefault: string | null }) => {
+export const getBannersVista = async ({ params, token, request }: { params: any; token: string; request: Request }) => {
+    // Obtener noImageDefault internamente
+    const { noImageDefault } = await getParametros({ params, token });
 
-
+    const idVista = params.idView ?? '';
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_BANNER_VISTA}?IdVista=${idVista}`,
         {
             method: "GET",
@@ -475,7 +517,7 @@ export const getBannersVista = async ({ idVista, token, noImageDefault }: { idVi
     );
 
     if (!response.ok) {
-        return [];
+        return { bannersData: [] };
     }
 
 
@@ -483,18 +525,25 @@ export const getBannersVista = async ({ idVista, token, noImageDefault }: { idVi
 
     const dataWithImages = await Promise.all(
         Banners.map(async (item: any) => {
-            const { Id } = item;
+            const { Id, Action } = item;
             const img = await getImage({ id: Id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenBanner, noImageDefault, idView: idVista, token });
-            return { ...item, img };
+            
+            // Generar urlDirect igual que en getMenu
+            const isView = Action ? Action.toLowerCase().startsWith("vista") : false;
+            const idViewDestino = Action ? Action.split(":")[1] : "";
+            const urlDirect = isView && idViewDestino ? await getDirectLink({ request, idView: idViewDestino, idMenu: "1", token }) : "";
+            
+            return { ...item, img, urlDirect };
         })
     );
 
-    return dataWithImages;
+    return { bannersData: dataWithImages };
 }
 
 
-export const getVideosVista = async ({ idVista, token }: { idVista: string; token: string }) => {
+export const getVideosVista = async ({ params, token }: { params: any; token: string }) => {
 
+    const idVista = params.idView ?? '';
     const response = await fetch(
         `${API_ENDPOINTS_CONTENT_SETTEINGS.GET_VIDOES_VISTA}?IdVista=${idVista}`,
         {
@@ -508,7 +557,7 @@ export const getVideosVista = async ({ idVista, token }: { idVista: string; toke
     const data = await response.json();
 
     if (!data.Videos || data.Videos.length === 0) {
-        return null;
+        return { videosData: null };
     }
 
     // Obtener miniaturas
@@ -538,11 +587,11 @@ export const getVideosVista = async ({ idVista, token }: { idVista: string; toke
     );
 
 
-    return videosDataSrc;
+    return { videosData: videosDataSrc };
 };
 
 
-export const getItems = async (request, action, idView, arrayFilterJson, idSucursal = 0, pagina = 0, ItemsPorPagina = 0, token, noImageDefault) => {
+export const getItemsBORRAR = async (request, action, idView, arrayFilterJson, idSucursal = 0, pagina = 0, ItemsPorPagina = 0, token, noImageDefault) => {
 
 
 
@@ -598,10 +647,87 @@ export const getItems = async (request, action, idView, arrayFilterJson, idSucur
     return dataWithImages;
 }
 
+export const getItems = async ({ 
+    request, 
+    params, 
+    token, 
+    arrayFilterJson, 
+    idSucursal = 0, 
+    pagina = 0, 
+    ItemsPorPagina = 0
+}: { 
+    request: Request, 
+    params: any, 
+    token: string, 
+    arrayFilterJson?: any[], 
+    idSucursal?: number, 
+    pagina?: number, 
+    ItemsPorPagina?: number
+}) => {
+    // Obtener action y noImageDefault internamente
+    const { action, noImageDefault } = await getParametros({ params, token });
+    
+    // Si no se pasan filtros, obtenerlos del URL
+    const filters = arrayFilterJson ?? SearchParamsManagment.getSearchParamsArrayFilterERP(request.url);
 
-export const getContenidoFichaItem = async (idView: string, token: string) => {
+    const idView = params.idView ?? '';
+    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_ITEMS}?IdVista=${idView}&IdSucursal=${idSucursal}&nPagina=${pagina}&ItemsPorPagina=${ItemsPorPagina}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token
+        },
+        body: JSON.stringify(filters)
+    });
+
+    const text = await response.text();
+
+    let payload: any;
+    try {
+        payload = JSON.parse(text);
+    } catch {
+        payload = [];
+    }
+
+    const itemsArray = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+            ? payload.data
+            : Array.isArray(payload?.items)
+                ? payload.items
+                : Array.isArray(payload?.Items)
+                    ? payload.Items
+                    : [];
+
+    let noImageDefaultProcessed: string | null = noImageDefault ?? null;
+    if (noImageDefault) {
+        noImageDefaultProcessed = await getImage({ id: noImageDefault, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault, idView, token });
+    }
+
+    const isView = action ? action.toLowerCase().startsWith("vista") : "";
+    const idViewAction = action ? action.split(":")[1] : "";
+    const dataWithImages = await Promise.all(
+        itemsArray.map(async (item: any) => {
+            const { id } = item;
+
+            const urlDirect = isView ? await getDirectLink({ request, idView: idViewAction, idMenu: "1", token, idEntity: id }) : "";
+            const image = await getImage({ id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: noImageDefaultProcessed, idView, token });
+
+            return {
+                ...item,
+                image,
+                urlDirect
+            };
+        })
+    );
+
+    return { products: dataWithImages, action };
+}
 
 
+export const getContenidoFichaItem = async ({ params, token }: { params: any, token: string }) => {
+
+    const { idView } = params;
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_CONTENIDO_FICHA_ITEM}?IdVista=${idView}`,
         {
             method: "GET",
@@ -614,7 +740,7 @@ export const getContenidoFichaItem = async (idView: string, token: string) => {
 
     const data = await response.text();
     const json = JSON.parse(data);
-    return json;
+    return { dataHtml: json };
 }
 
 export const fetchImageById = async ({ id, idView, token }: { id: number, idView: number, token: string }) => {
@@ -643,13 +769,13 @@ export const fetchImageById = async ({ id, idView, token }: { id: number, idView
 
 }
 
-export const getFichaProducto = async ({
+export const getFichaProductoBORRAR = async ({
     idView,
     idProducto,
     token
 }: {
     idView: string;
-    idProducto: String;
+    idProducto: string;
     token: string;
 }) => {
 
@@ -752,6 +878,12 @@ export const getFichaProducto = async ({
     };
 };
 
+export const getFichaProducto = async ({ params, token }: { params: any, token: string }) => {
+    const idView = params.idView ?? '';
+    const idProducto = params.idEntity ?? '';  // Obtener idProducto de params
+    const fichaProducto = await getFichaProductoBORRAR({ idView, idProducto, token });
+    return { fichaProducto };
+};
 
 // export const getImagenAsDownload = async ({ id, token }: { id: string, token: string }) => {
 
@@ -848,3 +980,169 @@ export async function getImagenAsPreview({ id, token }: { id: string, token: str
         throw error;
     }
 }
+
+// Función helper para convertir estilos a CSS string
+const convertStyleToString = (style: any, imports: any) => {
+    let cssString = "";
+
+    for (const mediaQuery in style) {
+        const cssStringAux = Object.keys(style[mediaQuery]).map((id) => {
+            const cssStringAuxId = Object.keys(style[mediaQuery][id]).map((selector) => {
+                const cssStringAuxSelector = Object.keys(style[mediaQuery][id][selector]).map((property) => {
+                    const kebabProperty = property.replace(/([A-Z])/g, "-$1").toLowerCase().replace(/^-/, '');
+                    return `${kebabProperty}: ${style[mediaQuery][id][selector][property]} !important; \n`;
+                });
+                return `${selector} { \n ${cssStringAuxSelector.join("")} \n }`;
+            })
+            return cssStringAuxId.join("");
+        });
+        if (mediaQuery === "@media global") {
+            cssString = cssStringAux.join("")
+        } else {
+            cssString = `${cssString}\n ${mediaQuery} { \n ${cssStringAux.join("")} \n } \n`;
+        }
+    }
+
+    return { cssString, importsString: imports };
+}
+
+export const getStyleLayoutData = async ({ request, params, token }: { 
+    request: Request, 
+    params: any, 
+    token: string 
+}) => {
+    const idEntity = params.idEntity ?? '';
+    
+    // Obtener estilos de la vista actual y del carrito en paralelo
+    const [{ styleData }, { styleData: styleDataCarrito }, vistaData] = await Promise.all([
+        getStylesVista({ params, token }),
+        getStylesVista({ params: { idView: "1000000" }, token }),
+        getVistaBORRAR({ params, token })
+    ]);
+
+    const { cssString, importsString } = convertStyleToString(styleData.styleObject, styleData.importString);
+    const { cssString: cssStringCarrito, importsString: importsStringCarrito } = convertStyleToString(styleDataCarrito.styleObject, styleDataCarrito.importString);
+
+    const combinedCssString = cssString + "\n" + cssStringCarrito;
+    const { utmString, typePageInsider } = vistaData;
+
+    const url = new URL(request.url);
+    const currentUrl = url.href;
+
+    // Obtener ficha de producto solo si hay idEntity
+    let product = null;
+    if (idEntity) {
+        product = await getFichaProductoBORRAR({ idView: params.idView ?? '', idProducto: idEntity, token });
+    }
+
+    return {
+        styleLayoutData: {
+            style: styleData.styleObject,
+            cssString: combinedCssString,
+            importsString,
+            token,
+            importStringShoppingCart: importsStringCarrito,
+            utmString,
+            typePageInsider,
+            currentUrl,
+            product
+        }
+    };
+};
+
+// Función helper para generar slugs (SEO friendly URLs)
+function slugify(text: string): string {
+    if (!text) return '';
+    return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Quitar acentos
+        .replace(/[^a-z0-9]+/g, "-")     // Reemplazar espacios/símbolos con guiones
+        .replace(/(^-|-$)/g, "");        // Quitar guiones al inicio/final
+}
+
+// Función helper para calcular si hay que redirigir
+function calculateProductRedirect({ 
+    request, 
+    params, 
+    utmString, 
+    nombre 
+}: { 
+    request: Request, 
+    params: any, 
+    utmString: string, 
+    nombre: string 
+}): string | null {
+    const idEntity = params.idEntity ?? '';
+    const expectedUtm = slugify(utmString);
+    const expectedSlug = slugify(nombre);
+
+    const utmParam = params.utm;
+    const slugParam = params.slug;
+
+    // Construir la parte de la URL esperada
+    let expectedUrlPart: string;
+    if (expectedUtm) {
+        expectedUrlPart = `${expectedUtm}/${expectedSlug}`;
+    } else {
+        expectedUrlPart = expectedSlug;
+    }
+
+    // Construir la parte actual de la URL
+    let currentUrlPart: string;
+    if (utmParam && slugParam) {
+        currentUrlPart = `${utmParam}/${slugParam}`;
+    } else if (utmParam) {
+        currentUrlPart = utmParam;
+    } else {
+        currentUrlPart = '';
+    }
+
+    // Si no coinciden, devolver la URL de redirección
+    if (currentUrlPart !== expectedUrlPart) {
+        const url = new URL(request.url);
+        const basePath = url.pathname.split('/productDetail/')[0];
+        return `${basePath}/productDetail/${idEntity}/${expectedUrlPart}${url.search}`;
+    }
+
+    return null;
+}
+
+export const getDetailProductData = async ({ request, params, token }: { 
+    request: Request, 
+    params: any, 
+    token: string 
+}) => {
+    const idEntity = params.idEntity ?? '';
+
+    // Llamar a las APIs en paralelo
+    const [parametros, fichaProductoResult, vistaResult] = await Promise.all([
+        getParametros({ params, token }),
+        getFichaProducto({ params, token }),
+        getVista({ params, token })
+    ]);
+
+    const { action, noImageDefault, onSearchResultAction } = parametros;
+    const { fichaProducto } = fichaProductoResult;
+    const { vistaData } = vistaResult;
+
+    // Calcular si hay que redirigir
+    const redirectTo = calculateProductRedirect({
+        request,
+        params,
+        utmString: vistaData?.utmString || '',
+        nombre: fichaProducto?.nombre || ''
+    });
+
+    return {
+        detailProductData: {
+            ...fichaProducto,
+            action,
+            noImageDefault,
+            onSearchResultAction,
+            idVista: params.idView ?? '',
+            idEntity
+        },
+        redirectTo
+    };
+};

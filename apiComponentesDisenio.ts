@@ -1,9 +1,6 @@
-// import { getSession } from "~/servicies/session.server";
 import { API_ENDPOINT_COMPONENTES_DISENIO } from "./apiConfig";
 
-
-
-export const getComponenteByCodigo = async ({ request, codigo, token }: { request: Request, codigo: string, token: string }) => {
+export const getComponenteByCodigo = async ({ token, codigo }: { token: string, codigo: string }) => {
 
     const response = await fetch(`${API_ENDPOINT_COMPONENTES_DISENIO.GET_BY_CODIGO}/Codigo/${codigo}`, {
         method: "GET",
@@ -12,11 +9,11 @@ export const getComponenteByCodigo = async ({ request, codigo, token }: { reques
         }
     });
 
-    const dataComponenteStyle = await response.json();
-
     if (!response.ok) {
-        return [];
+        return { dataComponenteStyle: [] };
     }
+
+    const {dataComponenteStyle} = await response.json();
 
     return { dataComponenteStyle };
 }

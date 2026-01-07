@@ -2,7 +2,7 @@
 //CONFIG
 import { API_ENDPOINT_STYLES } from "~/cms-web-apis/apiConfig";
 // import { getSession } from "~/servicies/session.server";
-import { getUserSession } from "~/servicies/userSession.server";
+import { getUserSessionBORRAR } from "~/servicies/userSession.server";
 //SESION
 function isJsonParseable(str: string): boolean {
     try {
@@ -43,7 +43,7 @@ export const getStylesVista = async ({ params, token }: { params: any, token: st
     }
 
     const style = { styleObject: styleObject2, importString };
-    return style;
+    return { styleData: style };
 
 }
 
@@ -52,7 +52,7 @@ export const setStylesVista = async ({ request, params, stylesObject, importStri
     // const session = await getSession(cookie);
     // const userId = session.get("userId");
     // const { name, token } = JSON.parse(userId || "{}");
-    const userData = await getUserSession(request);
+    const userData = await getUserSessionBORRAR(request);
 
     const idView = params.idView;
 

@@ -219,7 +219,7 @@ export const getCarrito = async ({ token, tag, centOpe, carritoCerrado = true }:
     };
 }
 
-export const getComponenteToVista = async ({ token }: { token: string }): Promise<any> => {
+export const getComponenteToVista = async ({ token }: { token: string }): Promise<{ vistasCarrito: any }> => {
 
     const response = await fetch(`${API_ENDPOINT_CARRITO.GET_COMPONENTE_TO_VISTA}`, {
         headers: {
@@ -228,12 +228,12 @@ export const getComponenteToVista = async ({ token }: { token: string }): Promis
     });
 
     if (!response.ok) {
-        return [];
+        return { vistasCarrito: [] };
     }
 
     const vistasCarrito = await response.json();
 
-    return vistasCarrito;
+    return { vistasCarrito };
 }
 
 export const updateCarrito = async ({ id, idEntity, cantidad, tag, token }: { id: string, idEntity: string, cantidad: string, tag: string, token: string }) => {
@@ -260,20 +260,6 @@ export const updateCarrito = async ({ id, idEntity, cantidad, tag, token }: { id
 
     const carritoAdaptado = await productAdapater(carrito.carritoActualizado, token);
 
-
-    // const itemsWithImage = await Promise.all(carrito.carritoActualizado.items.map(async (item: any) => {
-    //     return {
-    //         ...item,
-    //         image: await getImage({ id: item.idEntity, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: "0", token })
-    //     }
-    // }));
-
-
-    // const {
-    //     /* tag, */
-    //     carritoActualizado,
-    //     itemActualizado
-    // } = carrito;
 
     const {
         impuestos,
@@ -432,7 +418,6 @@ export const updateEnvioCarrito = async ({ msgRequest, msgResponse, strDireccion
             "msgResponse": JSON.parse(msgResponse)
         })
     });
-
 
 
     if (!response.ok) {

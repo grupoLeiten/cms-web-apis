@@ -1,71 +1,59 @@
-// URL base de Andreani desde variable de entorno
-export const ANDREANI_BASE_URL = import.meta.env.VITE_API_BASE_URL_ADREANI || "https://apis.andreani.com";
-export const ANDREANI_API_URL = `${ANDREANI_BASE_URL}/v1/tarifas`;
-export const ANDREANI_CREDENTIALS = {
-  userName: "leiten_gla",
-  password: "y1k3DinIhSJdxDaJNnde@",
+// export const ANDREANI_API_URL = "https://apisqa.andreani.com/v1/tarifas";
+export const ANDREANI_CREDENTIALS_QA = {
+  usuario: "testinternoqa_gla",
+  password: "iqVsIeR0q6voXcrs7HDV!",
 };
 
+const ANDREANI_CREDENCIALES_PRODUCTIVAS = {
+  "userName": "leiten_gla",
+  "password": "y1k3DinIhSJdxDaJNnde@"
+}
+
+const URL_BASE_ADREANI = import.meta.env.VITE_API_BASE_URL_ADREANI
 export async function getAndreaniToken(): Promise<string | null> {
-  // Autenticación con Andreani
-  const loginUrl = `${ANDREANI_BASE_URL}/login`;
-  
-  console.log("🔐 [Andreani Auth] Iniciando autenticación...");
-  console.log("🔐 [Andreani Auth] URL Base:", ANDREANI_BASE_URL);
-  console.log("🔐 [Andreani Auth] Login URL:", loginUrl);
-  console.log("🔐 [Andreani Auth] Usuario:", ANDREANI_CREDENTIALS.userName);
-  
+  // 🔧 TOKEN FORZADO PARA DESARROLLO - Cambia esto a false para usar autenticación real
+  // const USE_FIXED_TOKEN = true;
+  // const FIXED_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI5ZjlkY2FiMS00ZGI2LTRiMDMtYmViYS1mNGU0MWNkZDU5ZWEiLCJ1c2VyTmFtZSI6InRlc3RpbnRlcm5vcWFfZ2xhIiwiZ3JvdXBJZCI6ImE0MWMyNTZiLWQ0YzctNGJjMS05MDkyLWMzYWRlZDljMzkxYyIsImlhdCI6MTc2MDYxNDIwNiwiZXhwIjoxNzYwNzAwNjA2fQ.T0NJG2K2AXVg2PO7FYTYLpKqRyVFqlNl_fpqYHCkFvA";
+
+  // if (USE_FIXED_TOKEN) {
+  //   return FIXED_TOKEN;
+  // }
+
+  // Autenticación normal
   try {
-    const response = await fetch(loginUrl, {
-      method: "POST",
+    // Crear Basic Auth header
+    const credentials = `${ANDREANI_CREDENTIALS_QA.usuario}:${ANDREANI_CREDENTIALS_QA.password}`;
+    const base64Credentials = btoa(credentials);
+
+    const response = await fetch(`${URL_BASE_ADREANI}/login`, {
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Basic ${base64Credentials}`
       },
-      body: JSON.stringify(ANDREANI_CREDENTIALS),
+      // body: JSON.stringify(ANDREANI_CREDENTIALS_QA),
     });
 
-    console.log("🔐 [Andreani Auth] Response status:", response.status);
-    console.log("🔐 [Andreani Auth] Response statusText:", response.statusText);
-
     if (!response.ok) {
-      const errorBody = await response.text();
-      console.error("❌ [Andreani Auth] Error al autenticar:", response.status, response.statusText);
-      console.error("❌ [Andreani Auth] Error body:", errorBody);
+      console.error("Error al autenticar con Andreani:", response.statusText);
       return null;
     }
 
     const data = await response.json();
-    console.log("✅ [Andreani Auth] Respuesta recibida:", JSON.stringify(data, null, 2));
-    
-    const token = data.token || data.access_token || null;
-    if (token) {
-      console.log("✅ [Andreani Auth] Token obtenido exitosamente (primeros 50 chars):", token.substring(0, 50) + "...");
-    } else {
-      console.error("❌ [Andreani Auth] No se encontró token en la respuesta. Keys disponibles:", Object.keys(data));
-    }
-    
-    return token;
+    return data.token || data.access_token || null;
   } catch (error) {
-    console.error("❌ [Andreani Auth] Error en autenticación:", error);
+    console.error("Error en autenticación Andreani:", error);
     return null;
   }
 }
-
-export async function getCotizacion({ cpDestino, contrato, cliente, volumen }: { cpDestino: string; contrato: string; cliente: string; volumen: string; }) {
-  console.log("💰 [Andreani Cotizador] === INICIANDO COTIZACIÓN ===");
-  console.log("💰 [Andreani Cotizador] cpDestino:", cpDestino);
-  console.log("💰 [Andreani Cotizador] contrato:", contrato);
-  console.log("💰 [Andreani Cotizador] cliente:", cliente);
-  console.log("💰 [Andreani Cotizador] volumen:", volumen);
-  
+export async function getCotizacion({ cpDestino, volumen }: { cpDestino: string; contrato: string; cliente: string; volumen: string; }) {
   const tokenAdreani = await getAndreaniToken();
-  const url = new URL(ANDREANI_API_URL);
+  const endpoint = `${import.meta.env.VITE_API_BASE_URL_ADREANI}/v1/tarifas`;
+  const url = new URL(endpoint);
   url.searchParams.append("cpDestino", cpDestino);
-  url.searchParams.append("contrato", contrato);
-  url.searchParams.append("cliente", cliente);
+  url.searchParams.append("contrato", "400006711");
+  url.searchParams.append("cliente", "CL0003750");
   url.searchParams.append("bultos[0][volumen]", volumen);
-  
-  console.log("💰 [Andreani Cotizador] URL completa:", url.toString());
 
   const response = await fetch(url.toString(), {
     method: "GET",
@@ -74,18 +62,12 @@ export async function getCotizacion({ cpDestino, contrato, cliente, volumen }: {
     },
   });
 
-  console.log("💰 [Andreani Cotizador] Response status:", response.status);
-  
   const data = await response.json();
-  console.log("💰 [Andreani Cotizador] Respuesta:", JSON.stringify(data, null, 2));
-  
   return data;
 
 }
 
-const ANDREANI_SUCURSALES_URL = `${ANDREANI_BASE_URL}/v2/sucursales`;
-
-
+const ANDREANI_SUCURSALES_URL = `${import.meta.env.VITE_API_BASE_URL_ADREANI}/v2/sucursales`;
 
 interface Direccion {
   calle: string;
@@ -185,42 +167,101 @@ export async function getSucursales() {
 
 
 
-export const postCrearOrdenEnvio = async () => {
+export const postCrearOrdenEnvio = async ({
+  origen,
+  destino,
+  remitente,
+  destinatario,
+  remito,
+  bultos
+}: {
+  origen: any
+  destino: any,
+  remitente: any,
+  destinatario: any,
+  remito: any,
+  bultos: any
+}) => {
 
   const jsont = {
-    "estado": "Pendiente",
-    "tipo": "B2C",
-    "sucursalDeDistribucion": {
-      "nomenclatura": "BAR",
-      "descripcion": "BARRACAS",
-      "id": "3"
+    "contrato": "400006708",
+    "origen": {
+      "postal": {
+        "codigoPostal": "3378",
+        "calle": "Av Falsa",
+        "numero": "380",
+        "localidad": "PUERTO ESPERANZA 222",
+      }
     },
-    "sucursalDeRendicion": {
-      "nomenclatura": "PPB",
-      "descripcion": "PROVEEDOR CABA",
-      "id": "171"
-    },
-    "sucursalDeImposicion": {},
-    "sucursalAbastecedora": {},
-    "fechaCreacion": "2025-10-23T15:37:57-03:00",
-    "numeroDePermisionaria": "RNPSP Nº 586",
-    "descripcionServicio": "Encomienda eCommerce",
-    "bultos": [
-      {
-        "numeroDeBulto": "1",
-        "numeroDeEnvio": "360000101539859",
-        "totalizador": "1/1",
-        "linking": [
+    "destino": {
+      "postal": {
+        "codigoPostal": "1292",
+        "calle": "Macacha Guemes",
+        "numero": "28",
+        "localidad": "CIUDAD AUTONOMA DE BUENOS AIRES",
+        "componentesDeDireccion": [
           {
-            "meta": "Etiqueta",
-            "contenido": "https://apisqa.andreani.com/v2/ordenes-de-envio/API0000000417771/etiquetas?bulto=1"
+            "meta": "piso",
+            "contenido": "2"
+          },
+          {
+            "meta": "departamento",
+            "contenido": "B"
+          }
+        ]
+      }
+    },
+    "remitente": {
+      "nombreCompleto": "Alberto Lopez",
+      "telefonos": [
+        {
+          "tipo": 1,
+          "numero": "113332244"
+        }
+      ]
+    },
+    "destinatario": [
+      {
+        "nombreCompleto": "Empresa SA",
+        "telefonos": [
+          {
+            "tipo": 2,
+            "numero": "153111231"
           }
         ]
       }
     ],
-    "agrupadorDeBultos": "API0000000417771",
-    "etiquetasPorAgrupador": "https://apisqa.andreani.com/v2/ordenes-de-envio/API0000000417771/etiquetas"
+    "remito": {
+      "numeroRemito": "123456789012R"
+    },
+    "bultos": [
+      {
+        "kilos": 2,
+        "largoCm": 10,
+        "altoCm": 50,
+        "anchoCm": 10,
+        "volumenCm": 5000,
+        "valorDeclaradoSinImpuestos": 1200,
+        "valorDeclaradoConImpuestos": 1452,
+        "referencias": [
+          {
+            "meta": "detalle",
+            "contenido": "Secador de pelo"
+          },
+          {
+            "meta": "idCliente",
+            "contenido": "10000"
+          },
+          {
+            "meta": "observaciones",
+            "contenido": "color negro"
+          }
+        ]
+      }
+    ]
   }
+
+
 
   const token = await getAndreaniToken();
 
@@ -228,16 +269,14 @@ export const postCrearOrdenEnvio = async () => {
     throw new Error("No se pudo obtener el token de autenticación de Andreani");
   }
 
-  const response = await fetch(`${ANDREANI_BASE_URL}/v2/ordenes-de-envio`, {
+  const response = await fetch(`https://apisqa.andreani.com/v2/ordenes-de-envio`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Connection" : "keep-alive",
-      "Accept-Encoding" : "gzip, deflate, br",
-      "Accept" : "*/*",
-      "x-authorization-token": `Bearer ${token}`
+      "x-authorization-token": `${token}`
     },
-    body: JSON.stringify(jsont)
+    body: JSON.stringify(jsont),
+    
   });
 
   if (!response.ok) {
