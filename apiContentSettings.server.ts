@@ -50,7 +50,7 @@ export const getListaDeObjetos = async ({ params, token }: { params: any, token:
         }
     );
     const data = await response.json();
-    return {listaDeObjetos : data.ListaDeObjetos};
+    return { dataGetListaDeObjetos: data.ListaDeObjetos };
 }
 export const getItemsBySearchView = async ({ params, token, searchProduct }: { params: any, token: string, searchProduct: string }) => {
     const { idView } = params;
@@ -179,7 +179,14 @@ export const getParametros = async ({ params, token }: { params: any, token: str
     );
 
     if (!response.ok) {
-        return { success: false, message: "Error al obtener los parámetros - " + response.statusText };
+        return { 
+            dataGetParametros: {
+                action: "",
+                noImageDefault: null,
+                onGoToHomeAction: "",
+                onSearchResultAction: ""
+            }
+        };
     }
 
     const vistasData = await response.json();
@@ -189,24 +196,26 @@ export const getParametros = async ({ params, token }: { params: any, token: str
 
 
     return {
-        action: vistasData.action,
-        noImageDefault: noImageDefault,
-        onGoToHomeAction: vistasData.onGotoHomeAction,
-        onSearchResultAction: vistasData.onSearchResultAction
+        dataGetParametros: {
+            action: vistasData.action,
+            noImageDefault: noImageDefault,
+            onGoToHomeAction: vistasData.onGotoHomeAction,
+            onSearchResultAction: vistasData.onSearchResultAction
+        }
     };
 }
 
 export const getUrlDirectOnGoToHome = async ({ request, params, token }: { request: Request, params: any, token: string }) => {
-    const { onGoToHomeAction } = await getParametros({ params, token });
+    const { dataGetParametros } = await getParametros({ params, token });
     
-    if (!onGoToHomeAction) {
-        return { onGoToHomeAction: "" };
+    if (!dataGetParametros?.onGoToHomeAction) {
+        return { dataGetUrlDirectOnGoToHome: "" };
     }
     
-    const idView = onGoToHomeAction.split(":")[1];
+    const idView = dataGetParametros.onGoToHomeAction.split(":")[1];
     const onGoToHomeActionUrl = await getDirectLink({ request, idView, idMenu: "1", token });
     
-    return { onGoToHomeAction: onGoToHomeActionUrl };
+    return { dataGetUrlDirectOnGoToHome: onGoToHomeActionUrl };
 }
 
 export const getVistaTemplateName = async ({ params, token }: { params: any, token: string }) => {
@@ -245,7 +254,7 @@ export const getMenuGrid = async ({ params, token }: { params: any, token: strin
 
     const data = await response.json();
 
-    return { dataGetMenuGridData: data };
+    return { dataGetMenuGrid: data };
 
 }
 
@@ -255,7 +264,7 @@ export const getMenu = async ({ request, params, token }: { request: Request, pa
 
     // Validar que idMenu esté presente
     if (!idMenu) {
-        return { dataMenu: {
+        return { dataGetMenu: {
             title: "",
             menus: [],
             multimedia: false,
@@ -276,7 +285,7 @@ export const getMenu = async ({ request, params, token }: { request: Request, pa
 
     // Validar que la respuesta tenga la estructura esperada
     if (!menus || !menus.menuItems || !Array.isArray(menus.menuItems)) {
-        return { dataMenu: {
+        return { dataGetMenu: {
             title: menus?.title || "",
             menus: [],
             multimedia: menus?.menuContieneImagenes || false,
@@ -313,7 +322,7 @@ export const getMenu = async ({ request, params, token }: { request: Request, pa
         };
     }));
 
-    return { dataMenu: { title, menus: menuItems, multimedia, chip: { textoToHome: menus.textoToHome || "", actionHome: menus.actionHome || "" } } };
+    return { dataGetMenu: { title, menus: menuItems, multimedia, chip: { textoToHome: menus.textoToHome || "", actionHome: menus.actionHome || "" } } };
 }
 
 
@@ -441,13 +450,14 @@ export const getAtributosCMS = async ({ params, token, request, idMenu = "1", ar
     );
 
     const data = await response.json();
-    return { dataAtributos: data };
+    return { dataGetAtributosCMS: data };
 
 }
 
 export const postCarruselConfig = async ({ params, token }: { params: any, token: string }) => {
     // Obtener noImageDefault internamente
-    const { noImageDefault } = await getParametros({ params, token });
+    const { dataGetParametros } = await getParametros({ params, token });
+    const { noImageDefault } = dataGetParametros;
 
     const idVista = params.idView ?? '';
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.POST_CARRUSEL}?IdVista=${idVista}`, {
@@ -459,7 +469,7 @@ export const postCarruselConfig = async ({ params, token }: { params: any, token
     });
 
     if (!response.ok) {
-        return { carruselData: {
+        return { dataPostCarruselConfig: {
             arrows: false,
             activeView: 0,
             automaticViewChange: false,
@@ -497,14 +507,15 @@ export const postCarruselConfig = async ({ params, token }: { params: any, token
     }
     // carruselData.Items = responseWithImages;
 
-    return { carruselData: carruselDataFix };
+    return { dataPostCarruselConfig: carruselDataFix };
 
 };
 
 
 export const getBannersVista = async ({ params, token, request }: { params: any; token: string; request: Request }) => {
     // Obtener noImageDefault internamente
-    const { noImageDefault } = await getParametros({ params, token });
+    const { dataGetParametros } = await getParametros({ params, token });
+    const { noImageDefault } = dataGetParametros;
 
     const idVista = params.idView ?? '';
     const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_BANNER_VISTA}?IdVista=${idVista}`,
@@ -517,7 +528,7 @@ export const getBannersVista = async ({ params, token, request }: { params: any;
     );
 
     if (!response.ok) {
-        return { bannersData: [] };
+        return { dataGetBannersVista: [] };
     }
 
 
@@ -537,7 +548,7 @@ export const getBannersVista = async ({ params, token, request }: { params: any;
         })
     );
 
-    return { bannersData: dataWithImages };
+    return { dataGetBannersVista: dataWithImages };
 }
 
 
@@ -557,7 +568,7 @@ export const getVideosVista = async ({ params, token }: { params: any; token: st
     const data = await response.json();
 
     if (!data.Videos || data.Videos.length === 0) {
-        return { videosData: null };
+        return { dataGetVideosVista: null };
     }
 
     // Obtener miniaturas
@@ -587,7 +598,7 @@ export const getVideosVista = async ({ params, token }: { params: any; token: st
     );
 
 
-    return { videosData: videosDataSrc };
+    return { dataGetVideosVista: videosDataSrc };
 };
 
 
@@ -665,7 +676,8 @@ export const getItems = async ({
     ItemsPorPagina?: number
 }) => {
     // Obtener action y noImageDefault internamente
-    const { action, noImageDefault } = await getParametros({ params, token });
+    const { dataGetParametros } = await getParametros({ params, token });
+    const { action, noImageDefault } = dataGetParametros;
     
     // Si no se pasan filtros, obtenerlos del URL
     const filters = arrayFilterJson ?? SearchParamsManagment.getSearchParamsArrayFilterERP(request.url);
@@ -721,7 +733,7 @@ export const getItems = async ({
         })
     );
 
-    return { products: dataWithImages, action };
+    return { dataGetItems: { products: dataWithImages, action } };
 }
 
 
@@ -740,7 +752,7 @@ export const getContenidoFichaItem = async ({ params, token }: { params: any, to
 
     const data = await response.text();
     const json = JSON.parse(data);
-    return { dataHtml: json };
+    return { dataGetContenidoFichaItem: json };
 }
 
 export const fetchImageById = async ({ id, idView, token }: { id: number, idView: number, token: string }) => {
@@ -1122,7 +1134,8 @@ export const getDetailProductData = async ({ request, params, token }: {
         getVista({ params, token })
     ]);
 
-    const { action, noImageDefault, onSearchResultAction } = parametros;
+    const { dataGetParametros } = parametros;
+    const { action, noImageDefault, onSearchResultAction } = dataGetParametros;
     const { fichaProducto } = fichaProductoResult;
     const { vistaData } = vistaResult;
 
@@ -1135,7 +1148,7 @@ export const getDetailProductData = async ({ request, params, token }: {
     });
 
     return {
-        detailProductData: {
+        dataGetDetailProductData: {
             ...fichaProducto,
             action,
             noImageDefault,
