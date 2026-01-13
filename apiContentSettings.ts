@@ -45,9 +45,6 @@ export const getItemsBySearchView = async ({ params, token, searchProduct }: { p
         }
     );
 
-
-
-
     const itemsData = await response.json();
 
     return itemsData;

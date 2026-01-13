@@ -2,7 +2,7 @@
 import { API_ENDPOINT_CARRITO } from "./apiConfig";
 //SESSION
 import { TIPO_CONTENIDO_CONFIG } from "../cms-web-components/config/tipoContenidoConfig";
-import { getImage } from "./apiContentSettings.server";
+import { getImage } from "./apiContentSettings";
 
 
 
@@ -112,31 +112,90 @@ export const getShoppingCart = async ({ token, tag, centOpe, carritoCerrado = tr
 
 
 export const updateShoppingCart = async ({ id, idEntity, cantidad, tag, token }: { id: string, idEntity: string, cantidad: string, tag: string, token: string }) => {
+    console.log("========== [apiCarritoCompras.updateShoppingCart] INICIO ==========");
+    console.log("[updateShoppingCart] Timestamp:", new Date().toISOString());
+    console.log("[updateShoppingCart] Parámetros recibidos:");
+    console.log("  - id (idItem):", id);
+    console.log("  - idEntity:", idEntity);
+    console.log("  - cantidad:", cantidad);
+    console.log("  - tag:", tag?.substring(0, 50) + "...");
+    console.log("  - token presente:", !!token);
+    
+    const endpoint = `${API_ENDPOINT_CARRITO.ACTUALIZAR}`;
+    console.log("[updateShoppingCart] Endpoint:", endpoint);
+    
+    const bodyData = {
+        "tag": tag,
+        "idItem": id,
+        "idEntity": idEntity,
+        "cantidad": Number(cantidad)
+    };
+    console.log("[updateShoppingCart] Body a enviar:", JSON.stringify(bodyData, null, 2));
 
-    const response = await fetch(`${API_ENDPOINT_CARRITO.ACTUALIZAR}`, {
-        method: "POST",
-        headers: {
-            "Authorization": token,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            "tag": tag,
-            "idItem": id,
-            "idEntity": idEntity,
-            "cantidad": Number(cantidad)
-        })
-    });
-
-    if (!response.ok) {
-        throw ("Failed to update Cart");
+    let response;
+    try {
+        response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "Authorization": token,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(bodyData)
+        });
+        
+        console.log("[updateShoppingCart] Response status:", response.status);
+        console.log("[updateShoppingCart] Response statusText:", response.statusText);
+        console.log("[updateShoppingCart] Response ok:", response.ok);
+        console.log("[updateShoppingCart] Response headers:", JSON.stringify(Object.fromEntries(response.headers.entries())));
+        
+    } catch (fetchError: any) {
+        console.error("========== [updateShoppingCart] ERROR DE FETCH ==========");
+        console.error("[updateShoppingCart] Error de red/fetch:", fetchError?.message || fetchError);
+        console.error("[updateShoppingCart] Error stack:", fetchError?.stack);
+        throw new Error(`Error de red al conectar con el servidor: ${fetchError?.message || fetchError}`);
     }
 
+    if (!response.ok) {
+        let errorBody = "";
+        try {
+            errorBody = await response.text();
+            console.error("========== [updateShoppingCart] ERROR DEL SERVIDOR ==========");
+            console.error("[updateShoppingCart] Status:", response.status);
+            console.error("[updateShoppingCart] StatusText:", response.statusText);
+            console.error("[updateShoppingCart] Response body:", errorBody);
+        } catch (e) {
+            console.error("[updateShoppingCart] No se pudo leer el body del error");
+        }
+        throw new Error(`Error del servidor (${response.status}): ${errorBody || response.statusText}`);
+    }
 
-    const carritoResponse = await response.json();
+    let carritoResponse;
+    try {
+        const responseText = await response.text();
+        console.log("[updateShoppingCart] Response text (primeros 1000 chars):", responseText.substring(0, 1000));
+        
+        carritoResponse = JSON.parse(responseText);
+        console.log("[updateShoppingCart] Response parseado correctamente");
+        console.log("[updateShoppingCart] carritoActualizado existe:", !!carritoResponse?.carritoActualizado);
+        
+    } catch (parseError: any) {
+        console.error("========== [updateShoppingCart] ERROR DE PARSEO ==========");
+        console.error("[updateShoppingCart] Error al parsear JSON:", parseError?.message);
+        throw new Error(`Error al parsear respuesta del servidor: ${parseError?.message}`);
+    }
 
-    const shoppingCartAdaptado = await shoppingCartAdapter(carritoResponse.carritoActualizado , token);
-
-    return shoppingCartAdaptado;
+    try {
+        console.log("[updateShoppingCart] Adaptando carrito...");
+        const shoppingCartAdaptado = await shoppingCartAdapter(carritoResponse.carritoActualizado, token);
+        console.log("[updateShoppingCart] Carrito adaptado exitosamente");
+        console.log("========== [apiCarritoCompras.updateShoppingCart] FIN EXITOSO ==========");
+        return shoppingCartAdaptado;
+    } catch (adapterError: any) {
+        console.error("========== [updateShoppingCart] ERROR EN ADAPTER ==========");
+        console.error("[updateShoppingCart] Error en shoppingCartAdapter:", adapterError?.message);
+        console.error("[updateShoppingCart] carritoActualizado recibido:", JSON.stringify(carritoResponse?.carritoActualizado, null, 2)?.substring(0, 500));
+        throw new Error(`Error al adaptar el carrito: ${adapterError?.message}`);
+    }
 }
 
 export const removeItemFromShoppingCart = async ({ itemId,  tag, token }: { itemId: string, tag: string, token: string }) => {
@@ -587,5 +646,44 @@ export const PostRegistrarDatosEnvioCarrito = async ({
             msgRequest: msgRequest,
             msgResponse: msgResponse,
           })
+    });
+}
+
+export const postRegistrarCotizacionEnvioCarrito = async ({
+    token,
+    tag,
+    msgRequest,
+    msgResponse,
+    strDireccion,
+    strMetodoEnvio,
+    idDireccionEnvio,
+    costoEnvio
+}: {    
+    token: string,
+    tag: string,
+    msgRequest: string,
+    msgResponse: string,
+    strDireccion: string,
+    strMetodoEnvio: string,
+    idDireccionEnvio: number,
+    costoEnvio: number
+}) => {
+    const msgRequestParsed = JSON.parse(msgRequest);
+    const msgResponseParsed = JSON.parse(msgResponse);
+    const response = await fetch(`${API_ENDPOINT_CARRITO.POST_REGISTRAR_COTIZACION}`, {
+        method: "POST",
+        headers: {
+            "Authorization": token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            tag: tag,
+            msgRequest: msgRequestParsed,
+            msgResponse: msgResponseParsed,
+            strDireccion: strDireccion,
+            strMetodoEnvio: strMetodoEnvio,
+            idDireccionEnvio: idDireccionEnvio,
+            costoEnvio: costoEnvio
+        })
     });
 }

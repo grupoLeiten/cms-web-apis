@@ -1,3 +1,4 @@
+import configTemplateApis from "~/pages/HomePage/configTemplateComponent.server";
 import { getCentrosOperaciones } from "./apiCentrosOperaciones";
 import { 
     getContenidoFichaSucursalItem, 
@@ -15,43 +16,51 @@ import {
     getStyleLayoutData,
     getDetailProductData
 } from "./apiContentSettings.server";
-import { getUserSession } from "~/servicies/userSession.server";
+import { getUserSession } from "~/servicies/userSession";
 
-const templateApiConfig = {
-    footer : [
-        getCentrosOperaciones,
-        getContenidoFichaSucursalItem,
-        getMenuGrid
-    ],
-    homePage: [
-        getParametros,        // Para obtener action
-        postCarruselConfig,
-        getBannersVista,
-        getVideosVista,
-        getItems,
-        getContenidoFichaItem
-    ],
-    detailProduct: [
-        getDetailProductData  // Encapsula toda la lógica de detalle de producto + redirección
-    ],
-    listFilterProduct: [
-        getItems,             // Para obtener products (filtros del URL automáticos)
-        getContenidoFichaItem,// Para obtener dataHtml
-        getAtributosCMS       // Para obtener dataAtributos (filtros del URL automáticos)
-    ],
-    header: [
-        getParametros,        // Para obtener onSearchResultAction
-        getListaDeObjetos,    // Para obtener listaDeObjetos
-        getCentrosOperaciones,// Para obtener DataSucursales
-        getMenu,              // Para obtener dataMenu
-        getUrlDirectOnGoToHome,// Para obtener onGoToHomeAction
-        getUserSession        // Para obtener userData
-    ],
-    styleLayout: [
-        getStyleLayoutData    // Encapsula toda la lógica de estilos
-    ],
-    //AGREGAR MAS SECCIONES
-}
+// const templateApiConfig = {
+//     footer : [
+//         getCentrosOperaciones,
+//         getContenidoFichaSucursalItem,
+//         getMenuGrid
+//     ],
+//     HomePageComponent: [
+//         getParametros,        // Para obtener onSearchResultAction
+//         getListaDeObjetos,    // Para obtener listaDeObjetos
+//         getCentrosOperaciones,// Para obtener DataSucursales
+//         getMenu,              // Para obtener dataMenu
+//         getUrlDirectOnGoToHome,// Para obtener onGoToHomeAction
+//         getUserSession,
+//         getCentrosOperaciones,
+//         getContenidoFichaSucursalItem,
+//         getMenuGrid,        // Para obtener userData
+//         getBannersVista,
+//         getVideosVista,
+//         getItems,
+//         getContenidoFichaItem,
+//         getStyleLayoutData
+//     ],
+//     detailProduct: [
+//         getDetailProductData  // Encapsula toda la lógica de detalle de producto + redirección
+//     ],
+//     listFilterProduct: [
+//         getItems,             // Para obtener products (filtros del URL automáticos)
+//         getContenidoFichaItem,// Para obtener dataHtml
+//         getAtributosCMS       // Para obtener dataAtributos (filtros del URL automáticos)
+//     ],
+//     header: [
+//         getParametros,        // Para obtener onSearchResultAction
+//         getListaDeObjetos,    // Para obtener listaDeObjetos
+//         getCentrosOperaciones,// Para obtener DataSucursales
+//         getMenu,              // Para obtener dataMenu
+//         getUrlDirectOnGoToHome,// Para obtener onGoToHomeAction
+//         getUserSession        // Para obtener userData
+//     ],
+//     styleLayout: [
+//         getStyleLayoutData    // Encapsula toda la lógica de estilos
+//     ],
+//     //AGREGAR MAS SECCIONES
+// }
 
 /**
  * Tipo para las funciones API que reciben un objeto y devuelven un objeto
@@ -110,7 +119,7 @@ async function executeApiSection(
  */
 export async function executeAllApis(
     objetoLoader: { token: string; params?: any; request?: Request },
-    config: TemplateApiConfig = templateApiConfig
+    config: TemplateApiConfig = configTemplateApis
 ): Promise<Record<string, Record<string, any>>> {
     const results: Record<string, Record<string, any>> = {};
 
@@ -140,7 +149,7 @@ export async function executeAllApis(
 export async function executeSectionApis(
     partName: string,
     objetoLoader: { token: string; params?: any; request?: Request },
-    config: TemplateApiConfig = templateApiConfig
+    config: TemplateApiConfig = configTemplateApis
 ): Promise<Record<string, any>> {
     const apiFunctions = config[partName];
     

@@ -25,7 +25,7 @@ import {  API_ENDPOINTS_CONTEXT } from "~/cms-web-apis/apiConfig";
 
 
 
-import { createAnonymousSessionAndRedirect } from "~/servicies/userSession.server";
+import { createAnonymousSessionAndRedirect } from "~/servicies/userSession";
 
 export const getSignInAnonymous = async ({ request, route }: any) => {
     return await createAnonymousSessionAndRedirect(request, route);

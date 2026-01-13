@@ -1,9 +1,9 @@
 import { ROUTE_TEMPLATE_CONFIG } from "~/config/routeTemplateConfig";
-import { getVistaBORRAR } from "./apiContentSettings.server";
+import { getVista } from "./apiContentSettings.server";
 
 export const getDirectLink = async ({ request, idView, idMenu, token, idEntity = "" }: any) => {
-    const result = await getVistaBORRAR({ params: { idView }, token });
-    const { templateName } = result;
+    const result = await getVista({ params: { idView }, token });
+    const { templateName } = result.vistaData;
 
     // const url = new URL(request.url);
     // const paramsObj = Object.fromEntries(url.searchParams.entries());

@@ -2,7 +2,7 @@
 //CONFIG
 import { API_ENDPOINT_STYLES } from "~/cms-web-apis/apiConfig";
 // import { getSession } from "~/servicies/session.server";
-import { getUserSessionBORRAR } from "~/servicies/userSession.server";
+import { getUserSessionBORRAR } from "~/servicies/userSession";
 //SESION
 function isJsonParseable(str: string): boolean {
     try {

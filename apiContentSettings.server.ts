@@ -3,6 +3,7 @@ import { TIPO_CONTENIDO_CONFIG } from "../cms-web-components/config/tipoContenid
 import { getDirectLink } from "./utils";
 import { SearchParamsManagment } from "~/cms-web-components/utils/searchParams";
 import { getStylesVista } from "./apiStyles";
+import { ROUTE_TEMPLATE_CONFIG } from "~/config/routeTemplateConfig";
 
 export const getVistaBORRAR = async ({ params, token }: { params: any, token: string }) => {
 
@@ -339,22 +340,28 @@ export const getTiposContenido1 = async ({ token }: { token: string }) => {
 
 }
 
-const cache = new Map();
-
+// Cache para tipos de contenido - evita hacer peticiones repetidas
+const tiposContenidoCache = new Map<string, string>();
+let tiposContenidoDataCache: any[] | null = null;
 
 const _getIdTipoContenido = async (tipo: string, token: string) => {
+    // Verificar si ya tenemos el tipo en cache
+    if (tiposContenidoCache.has(tipo)) {
+        return tiposContenidoCache.get(tipo)!;
+    }
 
+    // Si no tenemos los datos cacheados, obtenerlos
+    if (!tiposContenidoDataCache) {
+        const data = await getTiposContenido1({ token });
+        // Asegurarse de que data sea un array
+        tiposContenidoDataCache = Array.isArray(data) ? data : (data?.data || data?.tiposContenido || []);
+    }
 
-    const data = await getTiposContenido1({ token });
-
-    // Asegurarse de que data sea un array
-    const dataArray = Array.isArray(data) ? data : (data?.data || data?.tiposContenido || []);
-
-    if (!Array.isArray(dataArray) || dataArray.length === 0) {
+    if (!Array.isArray(tiposContenidoDataCache) || tiposContenidoDataCache.length === 0) {
         throw new Error(`No se encontraron tipos de contenido o la respuesta no es válida`);
     }
 
-    const TipoContenido = dataArray.find((item: any) => {
+    const TipoContenido = tiposContenidoDataCache.find((item: any) => {
         return item.nombre === tipo;
     });
 
@@ -362,7 +369,8 @@ const _getIdTipoContenido = async (tipo: string, token: string) => {
         throw new Error(`No se encontró el tipo de contenido: ${tipo}`);
     }
 
-    cache.set("tipo", TipoContenido.idTipoContenido);
+    // Guardar en cache para futuras llamadas
+    tiposContenidoCache.set(tipo, TipoContenido.idTipoContenido);
 
     return TipoContenido.idTipoContenido;
 }
@@ -664,8 +672,8 @@ export const getItems = async ({
     token, 
     arrayFilterJson, 
     idSucursal = 0, 
-    pagina = 0, 
-    ItemsPorPagina = 0
+    pagina = 1,           // Cambiado de 0 a 1 para que la paginación funcione
+    ItemsPorPagina = 25   // Carga inicial de 25 productos
 }: { 
     request: Request, 
     params: any, 
@@ -718,11 +726,28 @@ export const getItems = async ({
 
     const isView = action ? action.toLowerCase().startsWith("vista") : "";
     const idViewAction = action ? action.split(":")[1] : "";
+    
+    // OPTIMIZACIÓN: Obtener templateName UNA SOLA VEZ antes del loop
+    let templateName: string | null = null;
+    if (isView && idViewAction) {
+        const vistaResult = await getVista({ params: { idView: idViewAction }, token });
+        templateName = vistaResult.vistaData?.templateName ?? null;
+    }
+    
+    // Función helper para construir urlDirect de forma síncrona
+    const buildUrlDirect = (idEntity: string): string => {
+        if (!isView || !templateName || !idViewAction) return "";
+        const routeBuilder = ROUTE_TEMPLATE_CONFIG[templateName as keyof typeof ROUTE_TEMPLATE_CONFIG];
+        if (!routeBuilder) return "";
+        return routeBuilder({ idView: idViewAction, idMenu: "1", idEntity, search: {}, modo: "/simulable" });
+    };
+    
     const dataWithImages = await Promise.all(
         itemsArray.map(async (item: any) => {
             const { id } = item;
 
-            const urlDirect = isView ? await getDirectLink({ request, idView: idViewAction, idMenu: "1", token, idEntity: id }) : "";
+            // Construir urlDirect de forma síncrona (sin llamadas HTTP adicionales)
+            const urlDirect = buildUrlDirect(id);
             const image = await getImage({ id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: noImageDefaultProcessed, idView, token });
 
             return {
@@ -802,7 +827,17 @@ export const getFichaProductoBORRAR = async ({
         }
     );
 
+    // Si la respuesta no es exitosa, retornar null
+    if (!response.ok) {
+        return null;
+    }
+
     const data = await response.json();
+
+    // Si no hay datos o la respuesta está vacía, retornar null
+    if (!data || typeof data !== 'object') {
+        return null;
+    }
 
     // Verificar que galeriaFotos existe y es un array antes de procesarlo
     if (data.galeriaFotos && Array.isArray(data.galeriaFotos)) {
@@ -838,6 +873,10 @@ export const getFichaProductoBORRAR = async ({
 
     }
 
+    // Verificar que items existe y es un array antes de procesarlo
+    if (!data.items || !Array.isArray(data.items)) {
+        data.items = [];
+    }
 
     const itemModelWithImage = await Promise.all(
         data.items.map(async (item: any) => {
@@ -865,24 +904,31 @@ export const getFichaProductoBORRAR = async ({
     data.items = itemModelWithImage;
 
     const { items, galeriaFotos, tabPositions, carruselModel, itemBaseModel, templateItems, ...others } = data;
-    const { itemModel, ...carrouselConfig } = carruselModel;
+    
+    // Verificar campos opcionales
+    const safeCarruselModel = carruselModel || {};
+    const safeTemplateItems = templateItems || [];
+    const safeItemBaseModel = itemBaseModel || {};
+    const safeGaleriaFotos = galeriaFotos || [];
+    
+    const { itemModel, ...carrouselConfig } = safeCarruselModel;
 
-    const templateNombre = templateItems.find((item: any) => item.Key === "#NOMBRE#");
-    const aux1 = templateItems.filter((item: any) => item.Key !== "#NOMBRE#");
-    const templateCodigo = templateItems.find((item: any) => item.Key === "#CODIGO#");
+    const templateNombre = safeTemplateItems.find((item: any) => item.Key === "#NOMBRE#");
+    const aux1 = safeTemplateItems.filter((item: any) => item.Key !== "#NOMBRE#");
+    const templateCodigo = safeTemplateItems.find((item: any) => item.Key === "#CODIGO#");
     const aux2 = aux1.filter((item: any) => item.Key !== "#CODIGO#");
 
     return {
         dataCarrusel: {
             ...carrouselConfig,
-            items: galeriaFotos
+            items: safeGaleriaFotos
         },
         tabPositions,
         itemModel, 
-        nombre: itemBaseModel.nombre,
-        codigo: itemBaseModel.codigo,
+        nombre: safeItemBaseModel.nombre || '',
+        codigo: safeItemBaseModel.codigo || '',
         items,
-        itemBaseModel : {...itemBaseModel, image : galeriaFotos[0].image},
+        itemBaseModel: { ...safeItemBaseModel, image: safeGaleriaFotos[0]?.image || '' },
         templateNombre,
         templateCodigo,
         boxItems: aux2,

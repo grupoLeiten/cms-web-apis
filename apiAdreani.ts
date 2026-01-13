@@ -5,11 +5,23 @@ export const ANDREANI_CREDENTIALS_QA = {
 };
 
 const ANDREANI_CREDENCIALES_PRODUCTIVAS = {
-  "userName": "leiten_gla",
-  "password": "y1k3DinIhSJdxDaJNnde@"
+  usuario: "leiten_gla",
+  password : "y1k3DinIhSJdxDaJNnde@"
 }
 
 const URL_BASE_ADREANI = import.meta.env.VITE_API_BASE_URL_ADREANI
+
+
+// Función helper para base64 que funciona en cliente y servidor
+function encodeBase64(str: string): string {
+  if (typeof btoa !== 'undefined') {
+    // Navegador - usar btoa nativo
+    return btoa(str);
+  } else {
+    // Node.js - usar Buffer
+    return Buffer.from(str, 'utf8').toString('base64');
+  }
+}
 export async function getAndreaniToken(): Promise<string | null> {
   // 🔧 TOKEN FORZADO PARA DESARROLLO - Cambia esto a false para usar autenticación real
   // const USE_FIXED_TOKEN = true;
@@ -22,16 +34,18 @@ export async function getAndreaniToken(): Promise<string | null> {
   // Autenticación normal
   try {
     // Crear Basic Auth header
-    const credentials = `${ANDREANI_CREDENTIALS_QA.usuario}:${ANDREANI_CREDENTIALS_QA.password}`;
-    const base64Credentials = btoa(credentials);
+    const credentials = `${ANDREANI_CREDENCIALES_PRODUCTIVAS.usuario}:${ANDREANI_CREDENCIALES_PRODUCTIVAS.password}`;
+    const base64Credentials = encodeBase64(credentials);
 
     const response = await fetch(`${URL_BASE_ADREANI}/login`, {
-      method: "GET",
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Basic ${base64Credentials}`
       },
-      // body: JSON.stringify(ANDREANI_CREDENTIALS_QA),
+      body: JSON.stringify({
+        "userName": ANDREANI_CREDENCIALES_PRODUCTIVAS.usuario,
+        "password": ANDREANI_CREDENCIALES_PRODUCTIVAS.password
+      }),
     });
 
     if (!response.ok) {
@@ -111,58 +125,58 @@ interface Sucursal {
 
 export async function getSucursales() {
   try {
-    const response = await fetch(ANDREANI_SUCURSALES_URL, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+    const response = await fetch(`${URL_BASE_ADREANI}/v2/sucursales`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
     });
 
     if (!response.ok) {
-      return Response.json(
-        {
-          success: false,
-          error: "Error al obtener las sucursales",
-          data: []
-        },
-        { status: response.status }
-      );
+        return Response.json(
+            {
+                success: false,
+                error: "Error al obtener las sucursales",
+                data: []
+            },
+            { status: response.status }
+        );
     }
 
     const sucursales: Sucursal[] = await response.json();
 
     // Filtrar solo sucursales con coordenadas básicas (sin validación de rangos)
     const sucursalesConCoordenadas = sucursales.filter(
-      (sucursal) =>
-        sucursal.coordenadas &&
-        sucursal.coordenadas.latitud &&
-        sucursal.coordenadas.longitud &&
-        sucursal.direccion &&
-        sucursal.direccion.calle
+        (sucursal) =>
+            sucursal.coordenadas &&
+            sucursal.coordenadas.latitud &&
+            sucursal.coordenadas.longitud &&
+            sucursal.direccion &&
+            sucursal.direccion.calle
     );
 
     const totalSucursales = sucursales.length;
     const sucursalesValidas = sucursalesConCoordenadas.length;
     const sucursalesInvalidas = totalSucursales - sucursalesValidas;
 
-    return Response.json({
-      success: true,
-      data: sucursalesConCoordenadas,
-      total: sucursalesValidas,
-      totalRecibidas: totalSucursales,
-      invalidas: sucursalesInvalidas
-    });
+    return {
+        success: true,
+        sucursalesConCoordenadas,
+        total: sucursalesValidas,
+        totalRecibidas: totalSucursales,
+        invalidas: sucursalesInvalidas,
+    };
 
-  } catch (error) {
+} catch (error) {
     return Response.json(
-      {
-        success: false,
-        error: "Error al conectar con el servidor de Andreani",
-        data: []
-      },
-      { status: 500 }
+        {
+            success: false,
+            error: "Error al conectar con el servidor de Andreani",
+            data: []
+        },
+        { status: 500 }
     );
-  }
+}
 }
 
 
@@ -269,7 +283,7 @@ export const postCrearOrdenEnvio = async ({
     throw new Error("No se pudo obtener el token de autenticación de Andreani");
   }
 
-  const response = await fetch(`https://apisqa.andreani.com/v2/ordenes-de-envio`, {
+  const response = await fetch(URL_BASE_ADREANI + "/v2/ordenes-de-envio", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
