@@ -4,20 +4,20 @@ import { API_ENDPOINT_CARRITO } from "./apiConfig";
 import { TIPO_CONTENIDO_CONFIG } from "../cms-web-components/config/tipoContenidoConfig";
 import { getImage } from "./apiContentSettings";
 
-
-
-const CMS_EDITABLE = import.meta.env.VITE_CMS_EDITABLE === 'true' ? true : false;
+const CMS_EDITABLE = false;
 
 const productAdapater = async (shoppingCart: any, token: string) => {
+
     return {
         ...shoppingCart,
         items: await Promise.all(shoppingCart.items.map(async (item: any) => ({
             ...item,
             image: await getImage({ id: item.idEntity, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: "0", token }),
-            preUniConMoneda: `${shoppingCart.simboloMoneda} ${item.preUni}`,
-            preUni: item.preUni,
-            importeTotal: item.importeTotal,
-            importeTotalConMoneda: `${shoppingCart.simboloMoneda} ${item.importeTotal}`
+            preUniConMoneda: `${shoppingCart.simboloMoneda} ${item.preUniAsString}`,
+            preUni: item.preUniAsString,
+            importeTotal: item.importeTotalAsString,
+            importeTotalMercadoPago: item.importeTotalConImpuestosAsNumber,
+            importeTotalConMoneda: `${shoppingCart.simboloMoneda} ${item.importeTotalAsString}`
         }))),
         impuestos: await Promise.all(shoppingCart.impuestos.map(async (impuesto: any) => ({
             ...impuesto,
@@ -33,9 +33,10 @@ const productAdapater = async (shoppingCart: any, token: string) => {
             conMoneda: `${shoppingCart.simboloMoneda} ${shoppingCart.importeSubTotalSinImpuestos}`
         },
         costoEntrega: {
-            sinMoneda: shoppingCart.costoEntrega,
-            conMoneda: `${shoppingCart.simboloMoneda} ${shoppingCart.costoEntrega}`
-        }
+            sinMoneda: shoppingCart.CostoEntregaFinalAsString,
+            conMoneda: `${shoppingCart.simboloMoneda} ${shoppingCart.CostoEntregaFinalAsString}`
+        },
+        costoEntregaFinalAsNumber: shoppingCart.costoEntregaFinalAsNumber
     }
 }
 
@@ -52,9 +53,12 @@ const shoppingCartAdapter = async (shoppingCart: any, token: string) => {
         importeTotal,
         importeSubTotalSinImpuestos,
         costoEntrega,
-        simboloMoneda
+        simboloMoneda,
+
+        costoEntregaAsString,
+        costoEntregaFinalAsNumber
     } = shoppingCart;
-    
+
     return {
         idCarrito,
         esAnonimo,
@@ -69,31 +73,38 @@ const shoppingCartAdapter = async (shoppingCart: any, token: string) => {
             preUniConMoneda: `${simboloMoneda} ${item.preUni}`,
             preUni: item.preUni,
             importeTotal: item.importeTotal,
-            importeTotalConMoneda: `${simboloMoneda} ${item.importeTotal}`
+            importeTotalConMoneda: `${simboloMoneda} ${item.importeTotal}`,
+            simboloMoneda,
         }))),
         impuestos: await Promise.all(impuestos.map(async (impuesto: any) => ({
             ...impuesto,
             importeImpuesto: impuesto.importeImpuesto,
+            simboloMoneda,
             importeImpuestoConMoneda: `${simboloMoneda} ${impuesto.importeImpuesto}`
         }))),
         importeTotal: {
             sinMoneda: importeTotal,
+            simboloMoneda,
             conMoneda: `${simboloMoneda} ${importeTotal}`
         },
         importeSubTotalSinImpuestos: {
             sinMoneda: importeSubTotalSinImpuestos,
+            simboloMoneda,
             conMoneda: `${simboloMoneda} ${importeSubTotalSinImpuestos}`
         },
         costoEntrega: {
-            sinMoneda: costoEntrega,
-            conMoneda: `${simboloMoneda} ${costoEntrega}`
-        }
+            sinMoneda: costoEntregaAsString,
+            simboloMoneda,
+            conMoneda: `${simboloMoneda} ${costoEntregaAsString}`
+        },
+        costoEntregaFinalAsNumber: costoEntregaFinalAsNumber
     }
 }
 
-export const getShoppingCart = async ({ token, tag, centOpe, carritoCerrado = true }: { token: string, tag: string, centOpe: string, carritoCerrado: boolean }): Promise<any> => {
+export const getShoppingCart = async ({ token, tag, centOpe, carritoCerrado }: { token: string, tag: string, centOpe: string, carritoCerrado: boolean }): Promise<any> => {
 
-    const response = await fetch(`${API_ENDPOINT_CARRITO.GET}/Tag/${tag}?esVersionEditable=${CMS_EDITABLE}&IdCentOpe=${centOpe}&controlCierre=${carritoCerrado}`, {
+
+    const response = await fetch(`${API_ENDPOINT_CARRITO.GET}/Tag/${tag}?esVersionEditable=${false}&IdCentOpe=${centOpe}&controlCierre=${carritoCerrado}`, {
         headers: {
             "Authorization": token
         }
@@ -112,93 +123,31 @@ export const getShoppingCart = async ({ token, tag, centOpe, carritoCerrado = tr
 
 
 export const updateShoppingCart = async ({ id, idEntity, cantidad, tag, token }: { id: string, idEntity: string, cantidad: string, tag: string, token: string }) => {
-    console.log("========== [apiCarritoCompras.updateShoppingCart] INICIO ==========");
-    console.log("[updateShoppingCart] Timestamp:", new Date().toISOString());
-    console.log("[updateShoppingCart] Parámetros recibidos:");
-    console.log("  - id (idItem):", id);
-    console.log("  - idEntity:", idEntity);
-    console.log("  - cantidad:", cantidad);
-    console.log("  - tag:", tag?.substring(0, 50) + "...");
-    console.log("  - token presente:", !!token);
-    
-    const endpoint = `${API_ENDPOINT_CARRITO.ACTUALIZAR}`;
-    console.log("[updateShoppingCart] Endpoint:", endpoint);
-    
-    const bodyData = {
-        "tag": tag,
-        "idItem": id,
-        "idEntity": idEntity,
-        "cantidad": Number(cantidad)
-    };
-    console.log("[updateShoppingCart] Body a enviar:", JSON.stringify(bodyData, null, 2));
-
-    let response;
-    try {
-        response = await fetch(endpoint, {
-            method: "POST",
-            headers: {
-                "Authorization": token,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(bodyData)
-        });
-        
-        console.log("[updateShoppingCart] Response status:", response.status);
-        console.log("[updateShoppingCart] Response statusText:", response.statusText);
-        console.log("[updateShoppingCart] Response ok:", response.ok);
-        console.log("[updateShoppingCart] Response headers:", JSON.stringify(Object.fromEntries(response.headers.entries())));
-        
-    } catch (fetchError: any) {
-        console.error("========== [updateShoppingCart] ERROR DE FETCH ==========");
-        console.error("[updateShoppingCart] Error de red/fetch:", fetchError?.message || fetchError);
-        console.error("[updateShoppingCart] Error stack:", fetchError?.stack);
-        throw new Error(`Error de red al conectar con el servidor: ${fetchError?.message || fetchError}`);
-    }
+    const response = await fetch(`${API_ENDPOINT_CARRITO.ACTUALIZAR}`, {
+        method: "POST",
+        headers: {
+            "Authorization": token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            "tag": tag,
+            "idItem": id,
+            "idEntity": idEntity,
+            "cantidad": Number(cantidad)
+        })
+    });
 
     if (!response.ok) {
-        let errorBody = "";
-        try {
-            errorBody = await response.text();
-            console.error("========== [updateShoppingCart] ERROR DEL SERVIDOR ==========");
-            console.error("[updateShoppingCart] Status:", response.status);
-            console.error("[updateShoppingCart] StatusText:", response.statusText);
-            console.error("[updateShoppingCart] Response body:", errorBody);
-        } catch (e) {
-            console.error("[updateShoppingCart] No se pudo leer el body del error");
-        }
+        const errorBody = await response.text().catch(() => "");
         throw new Error(`Error del servidor (${response.status}): ${errorBody || response.statusText}`);
     }
 
-    let carritoResponse;
-    try {
-        const responseText = await response.text();
-        console.log("[updateShoppingCart] Response text (primeros 1000 chars):", responseText.substring(0, 1000));
-        
-        carritoResponse = JSON.parse(responseText);
-        console.log("[updateShoppingCart] Response parseado correctamente");
-        console.log("[updateShoppingCart] carritoActualizado existe:", !!carritoResponse?.carritoActualizado);
-        
-    } catch (parseError: any) {
-        console.error("========== [updateShoppingCart] ERROR DE PARSEO ==========");
-        console.error("[updateShoppingCart] Error al parsear JSON:", parseError?.message);
-        throw new Error(`Error al parsear respuesta del servidor: ${parseError?.message}`);
-    }
-
-    try {
-        console.log("[updateShoppingCart] Adaptando carrito...");
-        const shoppingCartAdaptado = await shoppingCartAdapter(carritoResponse.carritoActualizado, token);
-        console.log("[updateShoppingCart] Carrito adaptado exitosamente");
-        console.log("========== [apiCarritoCompras.updateShoppingCart] FIN EXITOSO ==========");
-        return shoppingCartAdaptado;
-    } catch (adapterError: any) {
-        console.error("========== [updateShoppingCart] ERROR EN ADAPTER ==========");
-        console.error("[updateShoppingCart] Error en shoppingCartAdapter:", adapterError?.message);
-        console.error("[updateShoppingCart] carritoActualizado recibido:", JSON.stringify(carritoResponse?.carritoActualizado, null, 2)?.substring(0, 500));
-        throw new Error(`Error al adaptar el carrito: ${adapterError?.message}`);
-    }
+    const carritoResponse = await response.json();
+    const shoppingCartAdaptado = await shoppingCartAdapter(carritoResponse.carritoActualizado, token);
+    return shoppingCartAdaptado;
 }
 
-export const removeItemFromShoppingCart = async ({ itemId,  tag, token }: { itemId: string, tag: string, token: string }) => {
+export const removeItemFromShoppingCart = async ({ itemId, tag, token }: { itemId: string, tag: string, token: string }) => {
     const response = await fetch(`${API_ENDPOINT_CARRITO.REMOVEITEM}/TAG/${tag}/idItem/${itemId}`, {
         method: "DELETE",
         headers: {
@@ -208,12 +157,13 @@ export const removeItemFromShoppingCart = async ({ itemId,  tag, token }: { item
     });
 
     if (!response.ok) {
-        throw ("Failed to remove item from cart");
+        const errorBody = await response.text().catch(() => "");
+        throw new Error(`Error del servidor (${response.status}): ${errorBody || response.statusText}`);
     }
 
 }
 
-export const getCarrito = async ({ token, tag, centOpe, carritoCerrado = true }: { token: string, tag: string, centOpe: string, carritoCerrado?: boolean }): Promise<any> => {
+export const getCarrito = async ({ token, tag, centOpe, carritoCerrado = false }: { token: string, tag: string, centOpe: string, carritoCerrado?: boolean }): Promise<any> => {
 
     const response = await fetch(`${API_ENDPOINT_CARRITO.GET}/Tag/${tag}?esVersionEditable=${CMS_EDITABLE}&IdCentOpe=${2}&controlCierre=${carritoCerrado}`, {
         headers: {
@@ -233,6 +183,7 @@ export const getCarrito = async ({ token, tag, centOpe, carritoCerrado = true }:
 
 
     const { /* tag, */
+        idCarrito,
         esAnonimo,
         esCliente,
         enProcesoDePago,
@@ -244,6 +195,7 @@ export const getCarrito = async ({ token, tag, centOpe, carritoCerrado = true }:
         importeSubTotalSinImpuestos,
         simboloMoneda,
         costoEntrega,
+        costoEntregaFinalAsNumber,
     } = carritoAdaptado;
 
     const productos = [
@@ -254,6 +206,7 @@ export const getCarrito = async ({ token, tag, centOpe, carritoCerrado = true }:
     ]
 
     return {
+        idCarrito,
         esAnonimo,
         esCliente,
         enProcesoDePago,
@@ -264,7 +217,7 @@ export const getCarrito = async ({ token, tag, centOpe, carritoCerrado = true }:
         impuestos: impuestos.map((impuesto: any) => ({ ...impuesto, simboloMoneda })),
         importeTotal,
         importeSubTotalSinImpuestos,
-
+        costoEntregaFinalAsNumber,
 
         //viejo
         data: [
@@ -390,7 +343,8 @@ export const removeItemFromCarrito = async ({ token, itemId, centOpe, tag }: { t
     });
 
     if (!response.ok) {
-        throw ("Failed to remove item from cart");
+        const errorBody = await response.text().catch(() => "");
+        throw new Error(`Error del servidor (${response.status}): ${errorBody || response.statusText}`);
     }
 
     // Verificar si la respuesta tiene contenido antes de parsear JSON
@@ -535,12 +489,14 @@ export const postRegistratDatosEnvioCarrito = async ({
 
 export const postPrepararPagoCarrito = async ({
     msgRequest,
+    msgResponse,
     token,
     tag
 }: {
     msgRequest: any,
     token: string,
     tag: string
+    msgResponse: any
 }) => {
 
     const response = await fetch(`${API_ENDPOINT_CARRITO.POST_PREPARAR_PAGO_CARRITO}`, {
@@ -552,6 +508,7 @@ export const postPrepararPagoCarrito = async ({
         body: JSON.stringify({
             tag: tag,
             msgRequest: msgRequest,
+            msgResponse: msgResponse
         })
     });
 
@@ -604,7 +561,7 @@ export const PostRegistrarDatosPreEnvioCarrito = async ({
     tag,
     msgRequest,
     msgResponse
-}: {    
+}: {
     token: string,
     tag: string,
     msgRequest: any,
@@ -620,7 +577,7 @@ export const PostRegistrarDatosPreEnvioCarrito = async ({
             tag: tag,
             msgRequest: msgRequest,
             msgResponse: msgResponse,
-          })
+        })
     });
 }
 
@@ -629,7 +586,7 @@ export const PostRegistrarDatosEnvioCarrito = async ({
     tag,
     msgRequest,
     msgResponse
-}: {    
+}: {
     token: string,
     tag: string,
     msgRequest: any,
@@ -645,8 +602,13 @@ export const PostRegistrarDatosEnvioCarrito = async ({
             tag: tag,
             msgRequest: msgRequest,
             msgResponse: msgResponse,
-          })
+        })
     });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw (errorData?.message || "Fallo el registro de datos de envio del carrito");
+    }
+    return { success: true };
 }
 
 export const postRegistrarCotizacionEnvioCarrito = async ({
@@ -658,7 +620,7 @@ export const postRegistrarCotizacionEnvioCarrito = async ({
     strMetodoEnvio,
     idDireccionEnvio,
     costoEnvio
-}: {    
+}: {
     token: string,
     tag: string,
     msgRequest: string,

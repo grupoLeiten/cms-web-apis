@@ -1,22 +1,22 @@
-import configTemplateApis from "~/pages/HomePage/configTemplateComponent.server";
-import { getCentrosOperaciones } from "./apiCentrosOperaciones";
-import { 
-    getContenidoFichaSucursalItem, 
-    getMenuGrid,
-    postCarruselConfig,
-    getBannersVista,
-    getVideosVista,
-    getItems,
-    getContenidoFichaItem,
-    getParametros,
-    getAtributosCMS,
-    getListaDeObjetos,
-    getMenu,
-    getUrlDirectOnGoToHome,
-    getStyleLayoutData,
-    getDetailProductData
-} from "./apiContentSettings.server";
-import { getUserSession } from "~/servicies/userSession";
+import configTemplateApis from "~/cms-web-components/config/configTemplateComponent.server";
+// import { getCentrosOperaciones } from "./apiCentrosOperaciones";
+// import { 
+//     getContenidoFichaSucursalItem, 
+//     getMenuGrid,
+//     postCarruselConfig,
+//     getBannersVista,
+//     getVideosVista,
+//     getItems,
+//     getContenidoFichaItem,
+//     getParametros,
+//     getAtributosCMS,
+//     getListaDeObjetos,
+//     getMenu,
+//     getUrlDirectOnGoToHome,
+//     getStyleLayoutData,
+//     getDetailProductData
+// } from "./apiContentSettings.server";
+// import { getUserSession } from "~/servicies/userSession";
 
 // const templateApiConfig = {
 //     footer : [
@@ -161,4 +161,4 @@ export async function executeSectionApis(
 }
 
 // Exportar el templateApiConfig por si se necesita acceder directamente
-export { templateApiConfig };
+// export { templateApiConfig };

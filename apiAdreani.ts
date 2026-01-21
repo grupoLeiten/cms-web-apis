@@ -197,82 +197,106 @@ export const postCrearOrdenEnvio = async ({
   bultos: any
 }) => {
 
-  const jsont = {
+  // const body = {
+  //   "contrato": "400006708",
+  //   "origen": {
+  //     "postal": {
+  //       "codigoPostal": "3378",
+  //       "calle": "Av Falsa",
+  //       "numero": "380",
+  //       "localidad": "PUERTO ESPERANZA 222",
+  //     }
+  //   },
+  //   "destino": {
+  //     "postal": {
+  //       "codigoPostal": "1292",
+  //       "calle": "Macacha Guemes",
+  //       "numero": "28",
+  //       "localidad": "CIUDAD AUTONOMA DE BUENOS AIRES",
+  //       "componentesDeDireccion": [
+  //         {
+  //           "meta": "piso",
+  //           "contenido": "2"
+  //         },
+  //         {
+  //           "meta": "departamento",
+  //           "contenido": "B"
+  //         }
+  //       ]
+  //     }
+  //   },
+  //   "remitente": {
+  //     "nombreCompleto": "Alberto Lopez",
+  //     "telefonos": [
+  //       {
+  //         "tipo": 1,
+  //         "numero": "113332244"
+  //       }
+  //     ]
+  //   },
+  //   "destinatario": [
+  //     {
+  //       "nombreCompleto": "Empresa SA",
+  //       "telefonos": [
+  //         {
+  //           "tipo": 2,
+  //           "numero": "153111231"
+  //         }
+  //       ]
+  //     }
+  //   ],
+  //   "remito": {
+  //     "numeroRemito": "123456789012R"
+  //   },
+  //   "bultos": [
+  //     {
+  //       "kilos": 2,
+  //       "largoCm": 10,
+  //       "altoCm": 50,
+  //       "anchoCm": 10,
+  //       "volumenCm": 5000,
+  //       "valorDeclaradoSinImpuestos": 1200,
+  //       "valorDeclaradoConImpuestos": 1452,
+  //       "referencias": [
+  //         {
+  //           "meta": "detalle",
+  //           "contenido": "Secador de pelo"
+  //         },
+  //         {
+  //           "meta": "idCliente",
+  //           "contenido": "10000"
+  //         },
+  //         {
+  //           "meta": "observaciones",
+  //           "contenido": "color negro"
+  //         }
+  //       ]
+  //     }
+  //   ]
+  // }
+
+  const body = {
     "contrato": "400006708",
     "origen": {
-      "postal": {
-        "codigoPostal": "3378",
-        "calle": "Av Falsa",
-        "numero": "380",
-        "localidad": "PUERTO ESPERANZA 222",
-      }
+      "postal": origen
     },
     "destino": {
       "postal": {
-        "codigoPostal": "1292",
-        "calle": "Macacha Guemes",
-        "numero": "28",
-        "localidad": "CIUDAD AUTONOMA DE BUENOS AIRES",
-        "componentesDeDireccion": [
-          {
-            "meta": "piso",
-            "contenido": "2"
-          },
-          {
-            "meta": "departamento",
-            "contenido": "B"
-          }
-        ]
+        "codigoPostal": destino.codPos,
+        "calle": destino.calle,
+        "numero": destino.numero || "28",
+        "localidad": destino.localidad,
       }
     },
     "remitente": {
-      "nombreCompleto": "Alberto Lopez",
-      "telefonos": [
-        {
-          "tipo": 1,
-          "numero": "113332244"
-        }
-      ]
+      "nombreCompleto": remitente.nombreCompleto,
+      "telefonos": remitente.telefonos
     },
-    "destinatario": [
-      {
-        "nombreCompleto": "Empresa SA",
-        "telefonos": [
-          {
-            "tipo": 2,
-            "numero": "153111231"
-          }
-        ]
-      }
-    ],
+    "destinatario": destinatario,
     "remito": {
-      "numeroRemito": "123456789012R"
+      "numeroRemito": ""
     },
-    "bultos": [
-      {
-        "kilos": 2,
-        "largoCm": 10,
-        "altoCm": 50,
-        "anchoCm": 10,
-        "volumenCm": 5000,
-        "valorDeclaradoSinImpuestos": 1200,
-        "valorDeclaradoConImpuestos": 1452,
-        "referencias": [
-          {
-            "meta": "detalle",
-            "contenido": "Secador de pelo"
-          },
-          {
-            "meta": "idCliente",
-            "contenido": "10000"
-          },
-          {
-            "meta": "observaciones",
-            "contenido": "color negro"
-          }
-        ]
-      }
-    ]
+    "bultos": bultos,
   }
 
 
@@ -289,7 +313,7 @@ export const postCrearOrdenEnvio = async ({
       "Content-Type": "application/json",
       "x-authorization-token": `${token}`
     },
-    body: JSON.stringify(jsont),
+    body: JSON.stringify(body),
     
   });
 

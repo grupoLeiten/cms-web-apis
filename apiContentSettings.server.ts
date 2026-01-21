@@ -1,6 +1,6 @@
 import { API_ENDPOINTS_CONTENT_SETTEINGS, API_ENDPOINTS_PRODUCTOS, API_SERVICE_IMAGE_URL } from "~/cms-web-apis/apiConfig";
 import { TIPO_CONTENIDO_CONFIG } from "../cms-web-components/config/tipoContenidoConfig";
-import { getDirectLink } from "./utils";
+import { buildShortUrlDirect } from "./utils";
 import { SearchParamsManagment } from "~/cms-web-components/utils/searchParams";
 import { getStylesVista } from "./apiStyles";
 import { ROUTE_TEMPLATE_CONFIG } from "~/config/routeTemplateConfig";
@@ -214,7 +214,7 @@ export const getUrlDirectOnGoToHome = async ({ request, params, token }: { reque
     }
     
     const idView = dataGetParametros.onGoToHomeAction.split(":")[1];
-    const onGoToHomeActionUrl = await getDirectLink({ request, idView, idMenu: "1", token });
+    const onGoToHomeActionUrl = buildShortUrlDirect({ idView });
     
     return { dataGetUrlDirectOnGoToHome: onGoToHomeActionUrl };
 }
@@ -302,28 +302,55 @@ export const getMenu = async ({ request, params, token }: { request: Request, pa
         const subItems = item.menuItems && Array.isArray(item.menuItems)
             ? await Promise.all(item.menuItems.map(async (subItem: any) => {
                 // TODO: Implement return object for subItem if needed
-                const isView = subItem.action ? subItem.action.toLowerCase().startsWith("vista") : "";
-                const idView = subItem.action ? subItem.action.split(":")[1] : "";
+                const isViewFromAction = subItem.action ? subItem.action.toLowerCase().startsWith("vista") : "";
+                const idViewFromAction = subItem.action ? subItem.action.split(":")[1] : "";
 
                 return {
                     ...subItem,
-                    image: multimedia && idView ? await getImage({ id: subItem.id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: idView, token }) : null,
-                    urlDirect: isView && idView ? await getDirectLink({ request, idView, idMenu: "1", token }) : ""
+                    image: multimedia && idViewFromAction ? await getImage({ id: subItem.id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: idViewFromAction, token }) : null,
+                    urlDirect: isViewFromAction && idViewFromAction ? buildShortUrlDirect({ idView: idViewFromAction === "" ? idView : idViewFromAction, search: subItem.search }) : ""
                 };
             }))
             : [];
 
-        const isView = item.action ? item.action.toLowerCase().startsWith("vista") : "";
-        const idView = item.action ? item.action.split(":")[1] : "";
+        const isViewFromAction = item.action.toLowerCase().startsWith("vista");
+        const idViewFromAction = item.action ? item.action.split(":")[1] : "";
 
+        const id = item.id;
+
+        const idViewEnd = isViewFromAction ?  idViewFromAction : idView
         return {
             ...item,
             menuItems: subItems,
-            urlDirect: isView && idView ? await getDirectLink({ request, idView, idMenu: "1", token }) : ""
+            urlDirect: buildShortUrlDirect({
+                    "idView": idViewEnd,
+                    search: id
+                        ? new URLSearchParams({
+                            Filter: JSON.stringify([
+                                {
+                                    texto: item.title,
+                                    value: id,
+                                    nombre: item.title,
+                                    tipo: "menu"
+                                }
+                            ])
+                        }).toString()
+                        : ""
+                }),
         };
     }));
 
-    return { dataGetMenu: { title, menus: menuItems, multimedia, chip: { textoToHome: menus.textoToHome || "", actionHome: menus.actionHome || "" } } };
+    return {
+        dataGetMenu: {
+            title,
+            menus: menuItems,
+            multimedia,
+            chip: {
+                textoToHome: menus.textoToHome || "",
+                actionHome: menus.actionHome || ""
+            }
+        }
+    };
 }
 
 
@@ -547,10 +574,10 @@ export const getBannersVista = async ({ params, token, request }: { params: any;
             const { Id, Action } = item;
             const img = await getImage({ id: Id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenBanner, noImageDefault, idView: idVista, token });
             
-            // Generar urlDirect igual que en getMenu
+            // Generar urlDirect con formato corto
             const isView = Action ? Action.toLowerCase().startsWith("vista") : false;
             const idViewDestino = Action ? Action.split(":")[1] : "";
-            const urlDirect = isView && idViewDestino ? await getDirectLink({ request, idView: idViewDestino, idMenu: "1", token }) : "";
+            const urlDirect = isView && idViewDestino ? buildShortUrlDirect({ idView: idViewDestino }) : "";
             
             return { ...item, img, urlDirect };
         })
@@ -648,11 +675,27 @@ export const getItemsBORRAR = async (request, action, idView, arrayFilterJson, i
 
     const isView = action ? action.toLowerCase().startsWith("vista") : "";
     const idViewAction = action.split(":")[1];
+    
+    // Obtener utmString de la vista destino
+    let utmString = "";
+    if (isView && idViewAction) {
+        const vistaResult = await getVista({ params: { idView: idViewAction }, token });
+        utmString = vistaResult.vistaData?.utmString ?? "";
+    }
+    
     const dataWithImages = await Promise.all(
         itemsArray.map(async (item: any) => {
-            const { id } = item;
+            const { id, nombre } = item;
 
-            const urlDirect = isView ? await getDirectLink({ request, idView: idViewAction, idMenu: "1", token, idEntity: id }) : "";
+            // Construir urlDirect con formato corto
+            const urlDirect = isView 
+                ? buildShortUrlDirect({ 
+                    idView: idViewAction, 
+                    idEntity: id, 
+                    utmString, 
+                    nombre: nombre || "" 
+                }) 
+                : "";
             const image = await getImage({ id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault, idView, token });
 
             return {
@@ -727,27 +770,28 @@ export const getItems = async ({
     const isView = action ? action.toLowerCase().startsWith("vista") : "";
     const idViewAction = action ? action.split(":")[1] : "";
     
-    // OPTIMIZACIÓN: Obtener templateName UNA SOLA VEZ antes del loop
+    // OPTIMIZACIÓN: Obtener templateName y utmString UNA SOLA VEZ antes del loop
     let templateName: string | null = null;
+    let utmString: string = "";
     if (isView && idViewAction) {
         const vistaResult = await getVista({ params: { idView: idViewAction }, token });
         templateName = vistaResult.vistaData?.templateName ?? null;
+        utmString = vistaResult.vistaData?.utmString ?? "";
     }
-    
-    // Función helper para construir urlDirect de forma síncrona
-    const buildUrlDirect = (idEntity: string): string => {
-        if (!isView || !templateName || !idViewAction) return "";
-        const routeBuilder = ROUTE_TEMPLATE_CONFIG[templateName as keyof typeof ROUTE_TEMPLATE_CONFIG];
-        if (!routeBuilder) return "";
-        return routeBuilder({ idView: idViewAction, idMenu: "1", idEntity, search: {}, modo: "/simulable" });
-    };
     
     const dataWithImages = await Promise.all(
         itemsArray.map(async (item: any) => {
-            const { id } = item;
+            const { id, nombre } = item;
 
-            // Construir urlDirect de forma síncrona (sin llamadas HTTP adicionales)
-            const urlDirect = buildUrlDirect(id);
+            // Construir urlDirect con formato corto: /simulable/{idView}/{idEntity}/{utm?}/{slug?}
+            const urlDirect = isView && idViewAction 
+                ? buildShortUrlDirect({ 
+                    idView: idViewAction, 
+                    idEntity: id, 
+                    utmString, 
+                    nombre: nombre || "" 
+                }) 
+                : "";
             const image = await getImage({ id, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: noImageDefaultProcessed, idView, token });
 
             return {
@@ -878,6 +922,19 @@ export const getFichaProductoBORRAR = async ({
         data.items = [];
     }
 
+    // Obtener onSearchResultAction de la vista para determinar la vista destino de productos relacionados
+    const vistaActual = await getVista({ params: { idView }, token });
+    const onSearchResultAction = vistaActual?.vistaData?.onSearchResultAction || "";
+    const isView = onSearchResultAction ? onSearchResultAction.toLowerCase().startsWith("vista") : false;
+    const idViewAction = onSearchResultAction ? onSearchResultAction.split(":")[1] : "";
+    
+    // Obtener utmString de la vista destino UNA SOLA VEZ
+    let utmString = "";
+    if (isView && idViewAction) {
+        const vistaDestino = await getVista({ params: { idView: idViewAction }, token });
+        utmString = vistaDestino?.vistaData?.utmString ?? "";
+    }
+
     const itemModelWithImage = await Promise.all(
         data.items.map(async (item: any) => {
             if (item.tipoContenido === "Table") {
@@ -893,7 +950,20 @@ export const getFichaProductoBORRAR = async ({
                         idView,
                         token
                     });
-                    const itemBaseModel = { ...subItem.itemBaseModel, image };
+                    
+                    // Generar urlDirect para el producto/repuesto
+                    const productId = subItem.itemBaseModel?.id || subItem.id || "";
+                    const productNombre = subItem.itemBaseModel?.nombre || "";
+                    const urlDirect = isView && idViewAction 
+                        ? buildShortUrlDirect({ 
+                            idView: idViewAction, 
+                            idEntity: productId, 
+                            utmString, 
+                            nombre: productNombre 
+                        }) 
+                        : "";
+                    
+                    const itemBaseModel = { ...subItem.itemBaseModel, image, urlDirect };
                     return { ...subItem, itemBaseModel };
                 })
             );

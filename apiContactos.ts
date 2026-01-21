@@ -46,6 +46,22 @@ export const postGetDireccion = async ({ idCliente, idContacto, token }: { idCli
 
 }
 
+// Nueva función que devuelve TODAS las direcciones del contacto
+export const postGetDirecciones = async ({ idCliente, idContacto, token }: { idCliente: string, idContacto: string, token: string }) => {
+    const response = await fetch(`${API_ENDPOINT_CONTACTOS.GET_DIRECCION_DE_ENTREGA_CLIENTE_CONTACTO}?IdContacto=${idContacto}&IdCliente=${idCliente}`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: token
+            },
+        }
+    );
+
+    const data = await response.json();
+    return Array.isArray(data) ? data : []; // Devolver el array completo
+}
+
 export const postCrearContactoDireccionEntrega = async ({
     idContacto,
     idCliente,
@@ -99,6 +115,10 @@ export const postCrearContactoDireccionEntrega = async ({
 
     const bodyJson = JSON.stringify(body);
 
+    console.log("=== API postCrearContactoDireccionEntrega ===");
+    console.log("URL:", API_ENDPOINT_CONTACTOS.POST_CREAR_DIRECCION_DE_ENTREGA_CLIENTE_CONTACTO);
+    console.log("Body enviado:", bodyJson);
+
     const response = await fetch(`${API_ENDPOINT_CONTACTOS.POST_CREAR_DIRECCION_DE_ENTREGA_CLIENTE_CONTACTO}`,
         {
             method: "POST",
@@ -110,11 +130,24 @@ export const postCrearContactoDireccionEntrega = async ({
         }
     );
 
+    console.log("Response status:", response.status);
+    console.log("Response ok:", response.ok);
+    
+    // Intentar leer el body de la respuesta
+    let responseBody = null;
+    try {
+        responseBody = await response.json();
+        console.log("Response body:", JSON.stringify(responseBody, null, 2));
+    } catch (e) {
+        console.log("No se pudo parsear el body de respuesta");
+    }
+    console.log("=============================================");
+
     if (!response.ok) {
-        return { success: false, error: "Error al crear la dirección de entrega" };
+        return { success: false, error: responseBody?.message || "Error al crear la dirección de entrega", responseBody };
     }
 
-    return { success: true };
+    return { success: true, responseBody };
 }
 
 
@@ -288,32 +321,23 @@ export const postSendMailAutenticacion = async ({
         }
 
         // Si no es 200, manejar el error
-        console.log("ERROR: Status no es 200");
         let errorMessage = "Error al enviar el mail de autenticación";
         try {
             const textError = await response.text();
-            console.log("Body de error (texto):", textError);
             try {
                 const errorData = JSON.parse(textError);
-                console.log("Body de error (JSON parseado):", errorData);
                 errorMessage = errorData.message || errorData.error || errorMessage;
             } catch (e) {
                 errorMessage = textError || errorMessage;
             }
         } catch (e) {
-            console.log("Error al obtener texto de respuesta:", e);
+            // Error al obtener texto de respuesta
         }
-        console.log("Mensaje de error final:", errorMessage);
-        console.log("=== FIN LOG POST_SEND_MAIL_AUTENTICACION ===");
         return { 
             success: false, 
             error: errorMessage
         };
     } catch (error: any) {
-        console.log("=== EXCEPCIÓN EN POST_SEND_MAIL_AUTENTICACION ===");
-        console.log("Error:", error);
-        console.log("Error message:", error?.message);
-        console.log("=== FIN EXCEPCIÓN ===");
         return { 
             success: false, 
             error: error?.message || "Error de conexión al enviar el mail de autenticación" 
@@ -340,12 +364,6 @@ export const postLoginFromClaveAutenticacion = async ({
         });
         url += `?${searchParams.toString()}`;
 
-        console.log("=== LOG POST_LOGIN_FROM_CLAVE_AUTENTICACION ===");
-        console.log("URL completa:", url);
-        console.log("Mail:", mail);
-        console.log("Clave:", clave ? "***" : "No proporcionada");
-        console.log("Token:", token ? `${token.substring(0, 20)}...` : "No token");
-
         const response = await fetch(url, {
             method: "POST",
             headers: {
@@ -354,59 +372,40 @@ export const postLoginFromClaveAutenticacion = async ({
             }
         });
 
-        console.log("Status de respuesta:", response.status);
-        console.log("Status OK:", response.ok);
-        console.log("Headers de respuesta:", Object.fromEntries(response.headers.entries()));
-
         // Si la respuesta es 200, consideramos éxito
         if (response.ok) {
             try {
                 const textResponse = await response.text();
-                console.log("Body de respuesta (texto):", textResponse);
                 
                 if (textResponse.trim() === "") {
-                    console.log("Respuesta vacía, considerando éxito");
                     return { success: true, data: {} };
                 }
                 
                 const data = JSON.parse(textResponse);
-                console.log("Body de respuesta (JSON parseado):", data);
-                console.log("=== FIN LOG POST_LOGIN_FROM_CLAVE_AUTENTICACION ===");
                 return { success: true, data };
             } catch (e) {
-                console.log("Error al parsear JSON (pero status es 200):", e);
-                console.log("=== FIN LOG POST_LOGIN_FROM_CLAVE_AUTENTICACION ===");
                 return { success: true, data: {} };
             }
         }
 
         // Si no es 200, manejar el error
-        console.log("ERROR: Status no es 200");
         let errorMessage = "Error al validar la clave de autenticación";
         try {
             const textError = await response.text();
-            console.log("Body de error (texto):", textError);
             try {
                 const errorData = JSON.parse(textError);
-                console.log("Body de error (JSON parseado):", errorData);
                 errorMessage = errorData.message || errorData.error || errorMessage;
             } catch (e) {
                 errorMessage = textError || errorMessage;
             }
         } catch (e) {
-            console.log("Error al obtener texto de respuesta:", e);
+            // Error al obtener texto de respuesta
         }
-        console.log("Mensaje de error final:", errorMessage);
-        console.log("=== FIN LOG POST_LOGIN_FROM_CLAVE_AUTENTICACION ===");
         return { 
             success: false, 
             error: errorMessage
         };
     } catch (error: any) {
-        console.log("=== EXCEPCIÓN EN POST_LOGIN_FROM_CLAVE_AUTENTICACION ===");
-        console.log("Error:", error);
-        console.log("Error message:", error?.message);
-        console.log("=== FIN EXCEPCIÓN ===");
         return { 
             success: false, 
             error: error?.message || "Error de conexión al validar la clave de autenticación" 
