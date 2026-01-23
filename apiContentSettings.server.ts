@@ -18,8 +18,37 @@ export const getVistaBORRAR = async ({ params, token }: { params: any, token: st
         }
     );
 
-    const vistasData = await response.json();
-    return vistasData;
+    if (!response.ok) {
+        // Si la respuesta no es exitosa, devolver un objeto por defecto
+        return {
+            utmString: "",
+            typePageInsider: "",
+            templateName: ""
+        };
+    }
+
+    const text = await response.text();
+    
+    // Si la respuesta está vacía, devolver un objeto por defecto
+    if (!text || text.trim() === "") {
+        return {
+            utmString: "",
+            typePageInsider: "",
+            templateName: ""
+        };
+    }
+
+    try {
+        const vistasData = JSON.parse(text);
+        return vistasData;
+    } catch (error) {
+        // Si falla el parseo, devolver un objeto por defecto
+        return {
+            utmString: "",
+            typePageInsider: "",
+            templateName: ""
+        };
+    }
 }
 
 export const getVista = async ({ params, token }: { params: any, token: string }) => {
@@ -1275,3 +1304,16 @@ export const getDetailProductData = async ({ request, params, token }: {
         redirectTo
     };
 };
+
+export const postGetTextosByCodigo = async ({ codigos, token }: { codigos: string[], token: string }) => {
+    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_TEXTOS_BY_CODIGO}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token
+        },
+        body: JSON.stringify( codigos )
+    });
+    
+    return response.json();
+}

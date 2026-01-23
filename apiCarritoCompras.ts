@@ -56,7 +56,10 @@ const shoppingCartAdapter = async (shoppingCart: any, token: string) => {
         simboloMoneda,
 
         costoEntregaAsString,
-        costoEntregaFinalAsNumber
+        costoEntregaFinalAsNumber,
+        // Campos de envío
+        strMetodoEnvio,
+        strDireccion
     } = shoppingCart;
 
     return {
@@ -67,6 +70,9 @@ const shoppingCartAdapter = async (shoppingCart: any, token: string) => {
         strUusuario,
         strCliente,
         simboloMoneda,
+        // Campos de envío con los nombres que espera SummaryStepPage
+        strMetodoEntrega: strMetodoEnvio || "",
+        strDireccionEntrega: strDireccion || "",
         items: await Promise.all(items.map(async (item: any) => ({
             ...item,
             image: await getImage({ id: item.idEntity, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenChica, noImageDefault: "", idView: "0", token }),

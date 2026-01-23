@@ -49,6 +49,7 @@ export const API_ENDPOINTS_CONTENT_SETTEINGS = {
     MENU_GRID : `${API_BASE_URL}/ContentSettings/ContentSettings/GetMenuGrid`,
     LISTA_DE_OBJETOS : `${API_BASE_URL}/ContentSettings/GetListaDeObjetos`,
     GET_TEXTO_BY_CODIGO: `${API_BASE_URL}/ContentSettings/ContentSettings/GetTexto/Codigo`,
+    GET_TEXTOS_BY_CODIGO: `${API_BASE_URL}/ContentSettings/ContentSettings/GetTextos`,
 }
 
 export const API_ENDPOINT_STYLES = {

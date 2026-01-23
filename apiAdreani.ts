@@ -11,6 +11,11 @@ const ANDREANI_CREDENCIALES_PRODUCTIVAS = {
 
 const URL_BASE_ADREANI = import.meta.env.VITE_API_BASE_URL_ADREANI
 
+// Credenciales productivas Andreani
+const ANDREANI_CLIENTE = "0012011113";
+const ANDREANI_CONTRATO_DOMICILIO = "400038484";  // Envío a domicilio
+const ANDREANI_CONTRATO_SUCURSAL = "400038486";   // Envío a sucursal Andreani
+
 
 // Función helper para base64 que funciona en cliente y servidor
 function encodeBase64(str: string): string {
@@ -65,8 +70,8 @@ export async function getCotizacion({ cpDestino, volumen }: { cpDestino: string;
   const endpoint = `${import.meta.env.VITE_API_BASE_URL_ADREANI}/v1/tarifas`;
   const url = new URL(endpoint);
   url.searchParams.append("cpDestino", cpDestino);
-  url.searchParams.append("contrato", "400006711");
-  url.searchParams.append("cliente", "CL0003750");
+  url.searchParams.append("contrato", ANDREANI_CONTRATO_DOMICILIO);
+  url.searchParams.append("cliente", ANDREANI_CLIENTE);
   url.searchParams.append("bultos[0][volumen]", volumen);
 
   const response = await fetch(url.toString(), {
@@ -276,7 +281,7 @@ export const postCrearOrdenEnvio = async ({
   // }
 
   const body = {
-    "contrato": "400006708",
+    "contrato": ANDREANI_CONTRATO_DOMICILIO,
     "origen": {
       "postal": origen
     },
