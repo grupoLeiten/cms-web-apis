@@ -1,8 +1,22 @@
 
 
 import { redirect } from "react-router";
-import {  API_ENDPOINTS_CONTEXT } from "~/cms-web-apis/apiConfig";
+import { API_ENDPOINTS_CONTEXT } from "~/cms-web-apis/apiConfig";
 //  import { commitSession, getSession } from "~/servicies/session.server";
+
+export const getMapeoDominios = async ({ token }: { token?: string }) => {
+    const response = await fetch(API_ENDPOINTS_CONTEXT.GET_MAPEO_DOMINIOS, {
+        method: "GET",
+        headers: token ? { Authorization: token } : {},
+    });
+
+    if (!response.ok) {
+        return [];
+    }
+
+    const data = await response.json();
+    return data;
+};
 
 
 

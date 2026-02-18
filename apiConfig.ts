@@ -1,16 +1,23 @@
 //CONFIG DE LA API
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
-dotenv.config();
+// dotenv solo en Node (evita "process is not defined" en browser)
+if (typeof process !== "undefined") {
+  dotenv.config();
+}
 
-export const API_BASE_URL = process.env.API_BASE_URL;
-export const API_SERVICE_IMAGE_URL = process.env.VITE_SERVICE_API_IMAGE;
+const env = (key: string): string | undefined =>
+  typeof process !== "undefined" && process.env ? process.env[key] : (import.meta.env as Record<string, string>)[key];
+
+export const API_BASE_URL = env("API_BASE_URL");
+export const API_SERVICE_IMAGE_URL = env("VITE_SERVICE_API_IMAGE");
 
 
 
 export const API_ENDPOINTS_CONTEXT = {
     POST: `${API_BASE_URL}/Contexto/Contexto/Login`,
     LOGOUT: `${API_BASE_URL}/Contexto/Contexto/LogOut`,
+    GET_MAPEO_DOMINIOS: `${API_BASE_URL}/Contexto/Contexto/GetMapeoDominios`,
 }
 
 export const API_ENDPOINT_CONTACTOS = {
@@ -89,3 +96,15 @@ export const API_ENDPOINT_CARRITO = {
 export const API_ENDPOINT_COMPONENTES_DISENIO = {
     GET_BY_CODIGO : `${API_BASE_URL}/CMSComponentesDiseno/GetComponenteByCodigo`,
 }
+
+// Andreani (server: ANDREANI_*, client: VITE_ANDREANI_* para cotización)
+export const ANDREANI_BASE_URL = env("VITE_API_BASE_URL_ADREANI");
+export const ANDREANI_USUARIO = env("ANDREANI_USUARIO");
+export const ANDREANI_PASSWORD = env("ANDREANI_PASSWORD");
+export const ANDREANI_CLIENTE = env("ANDREANI_CLIENTE") ?? env("VITE_ANDREANI_CLIENTE");
+export const ANDREANI_CONTRATO_DOMICILIO = env("ANDREANI_CONTRATO_DOMICILIO") ?? env("VITE_ANDREANI_CONTRATO_DOMICILIO");
+export const ANDREANI_CONTRATO_SUCURSAL = env("ANDREANI_CONTRATO_SUCURSAL") ?? env("VITE_ANDREANI_CONTRATO_SUCURSAL");
+
+// Carrito / Checkout
+export const ID_VIEW_CARRITO = env("VITE_ID_VIEW_CHECKOUT") ?? "1000000";
+export const ID_CENTRO_OPERACION = env("VITE_ID_CENTRO_OPERACION") ?? "2";

@@ -1,69 +1,26 @@
-import { API_ENDPOINTS_CONTENT_SETTEINGS, API_ENDPOINTS_PRODUCTOS, API_SERVICE_IMAGE_URL } from "~/cms-web-apis/apiConfig";
-import { TIPO_CONTENIDO_CONFIG } from "../cms-web-components/config/tipoContenidoConfig";
+import { API_ENDPOINTS_CONTENT_SETTEINGS, API_ENDPOINTS_PRODUCTOS, API_SERVICE_IMAGE_URL, ID_VIEW_CARRITO } from "~/cms-web-apis/apiConfig";
+import { apiFetch } from "~/cms-web-apis/apiClient";
+import { TIPO_CONTENIDO_CONFIG } from "../config/tipoContenidoConfig";
 import { buildShortUrlDirect } from "./utils";
 import { SearchParamsManagment } from "~/cms-web-components/utils/searchParams";
 import { getStylesVista } from "./apiStyles";
 import { ROUTE_TEMPLATE_CONFIG } from "~/config/routeTemplateConfig";
 
 export const getVistaBORRAR = async ({ params, token }: { params: any, token: string }) => {
-
     const { idView } = params;
-
-    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_VISTA}/IdVista/${idView}`,
-        {
-            method: "GET",
-            headers: {
-                Authorization: token
-            }
-        }
-    );
-
-    if (!response.ok) {
-        // Si la respuesta no es exitosa, devolver un objeto por defecto
-        return {
-            utmString: "",
-            typePageInsider: "",
-            templateName: ""
-        };
-    }
-
-    const text = await response.text();
-    
-    // Si la respuesta está vacía, devolver un objeto por defecto
-    if (!text || text.trim() === "") {
-        return {
-            utmString: "",
-            typePageInsider: "",
-            templateName: ""
-        };
-    }
-
-    try {
-        const vistasData = JSON.parse(text);
-        return vistasData;
-    } catch (error) {
-        // Si falla el parseo, devolver un objeto por defecto
-        return {
-            utmString: "",
-            typePageInsider: "",
-            templateName: ""
-        };
-    }
+    const response = await apiFetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_VISTA}/IdVista/${idView}`, {
+        method: "GET",
+        token,
+    });
+    return response.json();
 }
 
 export const getVista = async ({ params, token }: { params: any, token: string }) => {
-
     const { idView } = params;
-
-    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_VISTA}/IdVista/${idView}`,
-        {
-            method: "GET",
-            headers: {
-                Authorization: token
-            }
-        }
-    );
-
+    const response = await apiFetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_VISTA}/IdVista/${idView}`, {
+        method: "GET",
+        token,
+    });
     const vistasData = await response.json();
     return { vistaData: vistasData };
 }
@@ -196,39 +153,17 @@ export const getActionVista = async ({ params, token }: { params: any, token: st
 }
 
 export const getParametros = async ({ params, token }: { params: any, token: string }) => {
-
     const { idView } = params;
-
-    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_VISTA}/IdVista/${idView}`,
-        {
-            method: "GET",
-            headers: {
-                Authorization: token
-            }
-        }
-    );
-
-    if (!response.ok) {
-        return { 
-            dataGetParametros: {
-                action: "",
-                noImageDefault: null,
-                onGoToHomeAction: "",
-                onSearchResultAction: ""
-            }
-        };
-    }
-
+    const response = await apiFetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_VISTA}/IdVista/${idView}`, {
+        method: "GET",
+        token,
+    });
     const vistasData = await response.json();
-
     const noImageDefault = vistasData.noImageDefault ? await getImage({ id: vistasData.noImageDefault, tipoContenido: TIPO_CONTENIDO_CONFIG.ImagenGrande, noImageDefault: "", idView: idView, token }) : null;
-
-
-
     return {
         dataGetParametros: {
             action: vistasData.action,
-            noImageDefault: noImageDefault,
+            noImageDefault,
             onGoToHomeAction: vistasData.onGotoHomeAction,
             onSearchResultAction: vistasData.onSearchResultAction
         }
@@ -467,26 +402,13 @@ export const getDefinirProductosaAction = async ({ search, token }: { search: an
 }
 
 export const getContenidoFichaSucursalItem = async ({ params, token }: { params: any; token: string }) => {
-
     const { idView } = params;
-    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_CONTENIDO_FICHA_SUCURSAL_ITEM}?IdVista=${idView}`,
-        {
-            method: "GET",
-            headers: {
-                Authorization: token
-            }
-        }
-    );
-
-    if (!response.ok) {
-        return { centroDeOperacionHtml: [] };
-    }
-
-    const data = await response.text();
-    const json = JSON.parse(data);
-
-    // Asegurar que siempre devuelva un array
-    return { dataGetContenidoFichaSucursalItem: Array.isArray(json) ? json : [] };
+    const response = await apiFetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_CONTENIDO_FICHA_SUCURSAL_ITEM}?IdVista=${idView}`, {
+        method: "GET",
+        token,
+    });
+    const json = await response.json();
+    return { dataGetContenidoFichaSucursalItem: json };
 }
 
 export const getAtributosCMS = async ({ params, token, request, idMenu = "1", arrayFilterJson }: { 
@@ -524,27 +446,10 @@ export const postCarruselConfig = async ({ params, token }: { params: any, token
     const { noImageDefault } = dataGetParametros;
 
     const idVista = params.idView ?? '';
-    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.POST_CARRUSEL}?IdVista=${idVista}`, {
+    const response = await apiFetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.POST_CARRUSEL}?IdVista=${idVista}`, {
         method: 'POST',
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": token
-        },
+        token,
     });
-
-    if (!response.ok) {
-        return { dataPostCarruselConfig: {
-            arrows: false,
-            activeView: 0,
-            automaticViewChange: false,
-            automaticViewChangeInterval: 0,
-            endless: false,
-            pageable: false,
-            pagerOverlay: false,
-            items: []
-        }};
-    }
-
     const carruselData = await response.json();
 
     // Check if Items exists and is an array before mapping
@@ -582,20 +487,10 @@ export const getBannersVista = async ({ params, token, request }: { params: any;
     const { noImageDefault } = dataGetParametros;
 
     const idVista = params.idView ?? '';
-    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_BANNER_VISTA}?IdVista=${idVista}`,
-        {
-            method: "GET",
-            headers: {
-                Authorization: token
-            }
-        }
-    );
-
-    if (!response.ok) {
-        return { dataGetBannersVista: [] };
-    }
-
-
+    const response = await apiFetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_BANNER_VISTA}?IdVista=${idVista}`, {
+        method: "GET",
+        token,
+    });
     const { Banners } = await response.json();
 
     const dataWithImages = await Promise.all(
@@ -762,8 +657,10 @@ export const getItems = async ({
     // Si no se pasan filtros, obtenerlos del URL
     const filters = arrayFilterJson ?? SearchParamsManagment.getSearchParamsArrayFilterERP(request.url);
 
+    const filtroInicial = SearchParamsManagment.getFiltroInicial(request.url);
+
     const idView = params.idView ?? '';
-    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_ITEMS}?IdVista=${idView}&IdSucursal=${idSucursal}&nPagina=${pagina}&ItemsPorPagina=${ItemsPorPagina}`, {
+    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_ITEMS}?IdVista=${idView}&IdSucursal=${idSucursal}&nPagina=${pagina}&ItemsPorPagina=${ItemsPorPagina}&filtroInicial=${filtroInicial}`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -835,10 +732,13 @@ export const getItems = async ({
 }
 
 
-export const getContenidoFichaItem = async ({ params, token }: { params: any, token: string }) => {
+export const getContenidoFichaItem = async ({ params, token, request }: { params: any, token: string, request: Request }) => {
 
     const { idView } = params;
-    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_CONTENIDO_FICHA_ITEM}?IdVista=${idView}`,
+
+    const filtroInicial = SearchParamsManagment.getFiltroInicial(request.url);
+
+    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_CONTENIDO_FICHA_ITEM}?IdVista=${idView}&filtroInicial=${filtroInicial}`,
         {
             method: "GET",
             headers: {
@@ -889,28 +789,11 @@ export const getFichaProductoBORRAR = async ({
     token: string;
 }) => {
 
-    const response = await fetch(
+    const response = await apiFetch(
         `${API_ENDPOINTS_CONTENT_SETTEINGS.GET_FICHA_PRODUCTO}?IdVista=${Number(idView)}&IdEntity=${idProducto}`,
-        {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: token
-            }
-        }
+        { method: "GET", token }
     );
-
-    // Si la respuesta no es exitosa, retornar null
-    if (!response.ok) {
-        return null;
-    }
-
     const data = await response.json();
-
-    // Si no hay datos o la respuesta está vacía, retornar null
-    if (!data || typeof data !== 'object') {
-        return null;
-    }
 
     // Verificar que galeriaFotos existe y es un array antes de procesarlo
     if (data.galeriaFotos && Array.isArray(data.galeriaFotos)) {
@@ -1173,7 +1056,7 @@ export const getStyleLayoutData = async ({ request, params, token }: {
     // Obtener estilos de la vista actual y del carrito en paralelo
     const [{ styleData }, { styleData: styleDataCarrito }, vistaData] = await Promise.all([
         getStylesVista({ params, token }),
-        getStylesVista({ params: { idView: "1000000" }, token }),
+        getStylesVista({ params: { idView: ID_VIEW_CARRITO }, token }),
         getVistaBORRAR({ params, token })
     ]);
 
@@ -1305,15 +1188,57 @@ export const getDetailProductData = async ({ request, params, token }: {
     };
 };
 
-export const postGetTextosByCodigo = async ({ codigos, token }: { codigos: string[], token: string }) => {
-    const response = await fetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_TEXTOS_BY_CODIGO}`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": token
-        },
-        body: JSON.stringify( codigos )
-    });
-    
-    return response.json();
+/** Solo convierte array con items a objeto por codigo; si viene [] u otro formato se devuelve tal cual. */
+function dataTextosArrayToObject(raw: unknown): unknown {
+    if (!Array.isArray(raw) || raw.length === 0) return raw;
+    return raw.reduce((acc: Record<string, { texto: string }>, item: any) => {
+        const codigo = item?.codigo ?? item?.Codigo ?? item?.code ?? item?.key;
+        const texto = typeof item?.texto === "string" ? item.texto : (item?.Texto ?? item?.text ?? item?.value ?? "");
+        if (codigo != null) acc[String(codigo)] = { texto: String(texto) };
+        return acc;
+    }, {});
 }
+
+export const postGetTextosByCodigo = async ({ codigos, token }: { codigos: string[], token: string }) => {
+    const response = await apiFetch(`${API_ENDPOINTS_CONTENT_SETTEINGS.GET_TEXTOS_BY_CODIGO}`, {
+        method: "POST",
+        token,
+        body: JSON.stringify(codigos),
+    });
+    const raw = await response.json();
+    return dataTextosArrayToObject(raw);
+}
+
+
+export const getTextosByCodigoForProductStepPage = async ({ token }: { token: string }) => {
+    return await postGetTextosByCodigo({
+        token: token,
+        codigos: [
+            "TextoBotonContinuarEnvio"
+        ]
+    });
+}
+
+export const getTextosByCodigoForShippingStepPage = async ({ token }: { token: string }) => {
+    return await postGetTextosByCodigo({
+        token: token,
+        codigos: [
+            "TextoBotonContinuarPago",
+            "TextoBotonVolver"
+        ]
+    });
+}
+
+export const getTextosByCodigoForLogoutLoginRegister = async ({ token }: { token: string }) => {
+    const response =  await postGetTextosByCodigo({
+        token: token,
+        codigos: [
+            "TextoBotonLogout",
+            "TextoBotonRegistrar",
+            "TextoBotonIniciarSesion"
+        ]
+    });
+
+    return { dataTextosLogoutLoginRegister: response };
+}
+

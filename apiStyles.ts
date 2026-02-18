@@ -42,7 +42,7 @@ export const getStylesVista = async ({ params, token }: { params: any, token: st
         }
     }
 
-    const style = { styleObject: styleObject2, importString };
+    const style = { styleObject: styleObject2, importString, /* atributosDeComponentes : JSON.parse(manipular.atributosDeComponentes)  */};
     return { styleData: style };
 
 }

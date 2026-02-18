@@ -29,7 +29,7 @@ export function buildShortUrlDirect({
     const slug = slugify(nombre);
     const utm = slugify(utmString);
     
-    let url = `/hikoki`;
+    let url = ``;
     
     if (utm && slug) {
         url += `/${utm}/${slug}`;
@@ -37,7 +37,7 @@ export function buildShortUrlDirect({
         url += `/${slug}`;
     }
 
-    url += `?idView=${idView}&idMenu=1`;
+    url += `/?idView=${idView}&idMenu=1`;
     
     if(idEntity) {
         url += `&idEntity=${idEntity}`;
@@ -74,20 +74,35 @@ export function getViewConfigByDomain(domain: string): { idView: string; idMenu:
  * Genera URL de NotFound usando el sistema de URLs cortas (/hikoki)
  */
 export function buildNotFoundUrl({ idView, idMenu }: { idView: string; idMenu: string }): string {
-    return `/hikoki?idView=${idView}&idMenu=${idMenu}`;
+    return `/?idView=${idView}&idMenu=${idMenu}`;
 }
 
 /**
  * Genera URL de Login usando el sistema de URLs cortas (/hikoki)
  */
 export function buildLoginUrl(): string {
-    return `/hikoki?idView=60&idMenu=1`;
+    return `/?idView=60&idMenu=1`;
 }
 
 /**
  * Genera URL de Register usando el sistema de URLs cortas (/hikoki)
  */
-export function buildRegisterUrl(): string {
-    return `/hikoki?idView=61&idMenu=1`;
+export function     buildRegisterUrl(): string {
+    return `/?idView=61&idMenu=1`;
+}
+
+/**
+ * Genera URL de recuperación de contraseña usando el sistema de URLs cortas (/hikoki)
+ * Mismo formato que buildLoginUrl y buildRegisterUrl
+ */
+export function buildRecoverPasswordUrl(): string {
+    return `/?idView=101&idMenu=1`;
+}
+
+/**
+ * URL de la página de token de recuperación (vista 102). El email se pasa por sesión.
+ */
+export function buildRecoverPasswordTokenUrl(): string {
+    return `/?idView=102&idMenu=1`;
 }
 

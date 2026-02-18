@@ -16,5 +16,5 @@ export const GetProvincias = async ({ request, token }: { request: Request, toke
         return [];
     }
 
-    return listaProvincias;
+    return {dataListaProvincias: listaProvincias};
 }

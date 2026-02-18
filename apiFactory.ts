@@ -1,4 +1,4 @@
-import configTemplateApis from "~/cms-web-components/config/configTemplateComponent.server";
+import configTemplateApis from "~/config/configTemplateComponentLoaders.server";
 // import { getCentrosOperaciones } from "./apiCentrosOperaciones";
 // import { 
 //     getContenidoFichaSucursalItem, 

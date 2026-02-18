@@ -1,66 +1,56 @@
 import { API_ENDPOINT_CONTACTOS } from "./apiConfig";
+import { apiFetch } from "./apiClient";
 
-export const postLoginFromContacto = async ({ email, passWord, token }: { email: string, passWord: string, token: string }) => {
+export const postLoginFromContacto = async ({
+  email,
+  passWord,
+  token,
+}: {
+  email: string;
+  passWord: string;
+  token: string;
+}) => {
+  const response = await apiFetch(`${API_ENDPOINT_CONTACTOS.POST_LOGIN_FROM_CONTACTO}`, {
+    method: "POST",
+    token,
+    body: JSON.stringify({ mail: email, passWord, token }),
+  });
+  return response.json();
+};
 
-    const body = {
-        "mail": email,
-        "passWord": passWord,
-        "token": token
+export const postGetDireccion = async ({
+  idCliente,
+  idContacto,
+  token,
+}: {
+  idCliente: string;
+  idContacto: string;
+  token: string;
+}) => {
+  const response = await apiFetch(
+    `${API_ENDPOINT_CONTACTOS.GET_DIRECCION_DE_ENTREGA_CLIENTE_CONTACTO}?IdContacto=${idContacto}&IdCliente=${idCliente}`,
+    { method: "POST", token }
+  );
+  const data = await response.json();
+  return Array.isArray(data) ? data[0] : data;
+};
 
-    }
-    const bodyJson = JSON.stringify(body);
-
-    const response = await fetch(`${API_ENDPOINT_CONTACTOS.POST_LOGIN_FROM_CONTACTO}`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: token
-            },
-            body: bodyJson
-        }
-    );
-
-
-    const data = await response.json();
-    return data;
-
-}
-
-export const postGetDireccion = async ({ idCliente, idContacto, token }: { idCliente: string, idContacto: string, token: string }) => {
-
-
-    const response = await fetch(`${API_ENDPOINT_CONTACTOS.GET_DIRECCION_DE_ENTREGA_CLIENTE_CONTACTO}?IdContacto=${idContacto}&IdCliente=${idCliente}`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: token
-            },
-        }
-    );
-
-
-    const data = await response.json();
-    return data[0];
-
-}
-
-// Nueva función que devuelve TODAS las direcciones del contacto
-export const postGetDirecciones = async ({ idCliente, idContacto, token }: { idCliente: string, idContacto: string, token: string }) => {
-    const response = await fetch(`${API_ENDPOINT_CONTACTOS.GET_DIRECCION_DE_ENTREGA_CLIENTE_CONTACTO}?IdContacto=${idContacto}&IdCliente=${idCliente}`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: token
-            },
-        }
-    );
-
-    const data = await response.json();
-    return Array.isArray(data) ? data : []; // Devolver el array completo
-}
+export const postGetDirecciones = async ({
+  idCliente,
+  idContacto,
+  token,
+}: {
+  idCliente: string;
+  idContacto: string;
+  token: string;
+}) => {
+  const response = await apiFetch(
+    `${API_ENDPOINT_CONTACTOS.GET_DIRECCION_DE_ENTREGA_CLIENTE_CONTACTO}?IdContacto=${idContacto}&IdCliente=${idCliente}`,
+    { method: "POST", token }
+  );
+  const data = await response.json();
+  return data;
+};
 
 export const postCrearContactoDireccionEntrega = async ({
     idContacto,
@@ -113,65 +103,31 @@ export const postCrearContactoDireccionEntrega = async ({
         direccionValidadaPorPin
     };
 
-    const bodyJson = JSON.stringify(body);
-
-    console.log("=== API postCrearContactoDireccionEntrega ===");
-    console.log("URL:", API_ENDPOINT_CONTACTOS.POST_CREAR_DIRECCION_DE_ENTREGA_CLIENTE_CONTACTO);
-    console.log("Body enviado:", bodyJson);
-
-    const response = await fetch(`${API_ENDPOINT_CONTACTOS.POST_CREAR_DIRECCION_DE_ENTREGA_CLIENTE_CONTACTO}`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: token
-            },
-            body: bodyJson
-        }
+    const response = await apiFetch(
+        `${API_ENDPOINT_CONTACTOS.POST_CREAR_DIRECCION_DE_ENTREGA_CLIENTE_CONTACTO}`,
+        { method: "POST", token, body: JSON.stringify(body) }
     );
-
-    console.log("Response status:", response.status);
-    console.log("Response ok:", response.ok);
-    
-    // Intentar leer el body de la respuesta
-    let responseBody = null;
-    try {
-        responseBody = await response.json();
-        console.log("Response body:", JSON.stringify(responseBody, null, 2));
-    } catch (e) {
-        console.log("No se pudo parsear el body de respuesta");
-    }
-    console.log("=============================================");
-
-    if (!response.ok) {
-        return { success: false, error: responseBody?.message || "Error al crear la dirección de entrega", responseBody };
-    }
-
-    return { success: true, responseBody };
+    return response.json();
 }
 
 
 
 
 
-export const GetTiposInscripcionParaFacturar = async ({ request, token }: { request: Request, token: string }) => {
-
-
-    const response = await fetch(`${API_ENDPOINT_CONTACTOS.GET_TIPOS_INCRIPCIONES_PARA_FACTURAR}`, {
-        method: "GET",
-        headers: {
-            "Authorization": token
-        }
-    });
-
-    const listaTiposInscripcion = await response.json();
-
-    if (!response.ok) {
-        return [];
-    }
-
-    return listaTiposInscripcion;
-}
+export const GetTiposInscripcionParaFacturar = async ({
+  request,
+  token,
+}: {
+  request: Request;
+  token: string;
+}) => {
+  const response = await apiFetch(
+    `${API_ENDPOINT_CONTACTOS.GET_TIPOS_INCRIPCIONES_PARA_FACTURAR}`,
+    { method: "GET", token }
+  );
+  const listaTiposInscripcion = await response.json();
+  return {dataListaTiposInscripcion: listaTiposInscripcion};
+};
 
 
 
@@ -229,186 +185,78 @@ export async function postRegisterFromContacto(data: {
 
     const bodyJson = JSON.stringify(body);
 
-    const response = await fetch(`${API_ENDPOINT_CONTACTOS.POST_CREAR_CONTACTO}`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: token
-            },
-            body: bodyJson
-        }
-    );
-
-    const responseData = await response.json();
-
-    return responseData;
-
-}
-
-export const postConfirmarContacto = async ({ token, tokenParametro }: { token: string, tokenParametro: string | undefined }) => {
-
-    const response = await fetch(`${API_ENDPOINT_CONTACTOS.PORT_CONFIRMAR_CONTACTO}?tokenParametro=${tokenParametro}`, {
+    const response = await apiFetch(`${API_ENDPOINT_CONTACTOS.POST_CREAR_CONTACTO}`, {
         method: "POST",
-        headers: {
-            "Authorization": token || ""
-        }
+        token,
+        body: bodyJson
     });
-
-    if (!response.ok) {
-        return { success: false, error: "Error al confirmar el contacto" };
-    }
-
-    return { success: true };
+    return response.json();
 }
 
-
-export const getSetClienteSession = async ({ token, idContacto, idCliente }: { token: string, idContacto: string, idCliente: string }) => {
-
-
-    await fetch(`${API_ENDPOINT_CONTACTOS.GET_SET_CLIENTE_SESSION}?idContacto=${idContacto}&idCliente=${idCliente}&&token=${token}`, {
-        method: "GET",
-        headers: {
-            "Authorization": token
-        }
-    });
-
-    return { success: true };
-}
-
-export const postSendMailAutenticacion = async ({ 
-    token, 
-    queryParams 
-}: { 
-    token: string, 
-    queryParams?: Record<string, string> 
+export const postConfirmarContacto = async ({
+  token,
+  tokenParametro,
+}: {
+  token: string;
+  tokenParametro: string | undefined;
 }) => {
-    try {
-        let url = `${API_ENDPOINT_CONTACTOS.POST_SEND_MAIL_AUTENTICACION}`;
-        
-        // Agregar query parameters si existen
-        if (queryParams && Object.keys(queryParams).length > 0) {
-            const searchParams = new URLSearchParams(queryParams);
-            url += `?${searchParams.toString()}`;
-        }
+  const response = await apiFetch(
+    `${API_ENDPOINT_CONTACTOS.PORT_CONFIRMAR_CONTACTO}?tokenParametro=${tokenParametro}`,
+    { method: "POST", token: token || "" }
+  );
+  return response.json();
+};
 
-     
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": token
-            }
-        });
 
-     
-        // Si la respuesta es 200, consideramos éxito sin importar si hay JSON o no
-        if (response.ok) {
-            // Intentar parsear JSON si existe, si no, retornar éxito de todas formas
-            try {
-                const textResponse = await response.text();
-                
-                if (textResponse.trim() === "") {
-                    return { success: true, data: {} };
-                }
-                
-                const data = JSON.parse(textResponse);
-                return { success: true, data };
-            } catch (e) {
-                // Si no hay JSON, igual es éxito (el backend solo responde 200)
-                return { success: true, data: {} };
-            }
-        }
-
-        // Si no es 200, manejar el error
-        let errorMessage = "Error al enviar el mail de autenticación";
-        try {
-            const textError = await response.text();
-            try {
-                const errorData = JSON.parse(textError);
-                errorMessage = errorData.message || errorData.error || errorMessage;
-            } catch (e) {
-                errorMessage = textError || errorMessage;
-            }
-        } catch (e) {
-            // Error al obtener texto de respuesta
-        }
-        return { 
-            success: false, 
-            error: errorMessage
-        };
-    } catch (error: any) {
-        return { 
-            success: false, 
-            error: error?.message || "Error de conexión al enviar el mail de autenticación" 
-        };
-    }
-}
-
-export const postLoginFromClaveAutenticacion = async ({ 
-    token, 
-    mail,
-    clave
-}: { 
-    token: string, 
-    mail: string,
-    clave: string
+export const getSetClienteSession = async ({
+  token,
+  idContacto,
+  idCliente,
+}: {
+  token: string;
+  idContacto: string;
+  idCliente: string;
 }) => {
-    try {
-        let url = `${API_ENDPOINT_CONTACTOS.POST_LOGIN_FROM_CLAVE_AUTENTICACION}`;
-        
-        // Agregar query parameters
-        const searchParams = new URLSearchParams({
-            mail: mail,
-            clave: clave
-        });
-        url += `?${searchParams.toString()}`;
+  const response = await apiFetch(
+    `${API_ENDPOINT_CONTACTOS.GET_SET_CLIENTE_SESSION}?idContacto=${idContacto}&idCliente=${idCliente}&&token=${token}`,
+    { method: "GET", token }
+  );
+  const text = await response.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {};
+  }
+};
 
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": token
-            }
-        });
+export const postSendMailAutenticacion = async ({
+  token,
+  queryParams,
+}: {
+  token: string;
+  queryParams?: Record<string, string>;
+}) => {
+  let url = `${API_ENDPOINT_CONTACTOS.POST_SEND_MAIL_AUTENTICACION}`;
+  if (queryParams && Object.keys(queryParams).length > 0) {
+    url += `?${new URLSearchParams(queryParams).toString()}`;
+  }
+  const response = await apiFetch(url, { method: "POST", token });
+  const text = await response.text();
+  return text ? JSON.parse(text) : {};
+};
 
-        // Si la respuesta es 200, consideramos éxito
-        if (response.ok) {
-            try {
-                const textResponse = await response.text();
-                
-                if (textResponse.trim() === "") {
-                    return { success: true, data: {} };
-                }
-                
-                const data = JSON.parse(textResponse);
-                return { success: true, data };
-            } catch (e) {
-                return { success: true, data: {} };
-            }
-        }
-
-        // Si no es 200, manejar el error
-        let errorMessage = "Error al validar la clave de autenticación";
-        try {
-            const textError = await response.text();
-            try {
-                const errorData = JSON.parse(textError);
-                errorMessage = errorData.message || errorData.error || errorMessage;
-            } catch (e) {
-                errorMessage = textError || errorMessage;
-            }
-        } catch (e) {
-            // Error al obtener texto de respuesta
-        }
-        return { 
-            success: false, 
-            error: errorMessage
-        };
-    } catch (error: any) {
-        return { 
-            success: false, 
-            error: error?.message || "Error de conexión al validar la clave de autenticación" 
-        };
-    }
-}
+export const postLoginFromClaveAutenticacion = async ({
+  token,
+  mail,
+  clave,
+}: {
+  token: string;
+  mail: string;
+  clave: string;
+}) => {
+  const url = `${API_ENDPOINT_CONTACTOS.POST_LOGIN_FROM_CLAVE_AUTENTICACION}?${new URLSearchParams({ mail, clave }).toString()}`;
+  const response = await apiFetch(url, { method: "POST", token });
+  const text = await response.text();
+  return text ? JSON.parse(text) : {};
+};

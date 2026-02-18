@@ -38,9 +38,9 @@ export const getWalletMP = async ({ token, shoppingCart, tag }: { token: string,
                     itemEnvio,
                 ],
                 back_urls: {
-                    success: `${process.env.MERCADO_PAGO_URL}/simulable/view/84/SummarySuccess/${tag}`,
-                    failure: `${process.env.MERCADO_PAGO_URL}/simulable/view/85/SummaryRejected/${tag}`,
-                    pending: `${process.env.MERCADO_PAGO_URL}/simulable/view/85/SummaryRejected/${tag}`
+                    success: `${process.env.MERCADO_PAGO_URL}/success?idView=84&idMenu=1&tag=${tag}`,
+                    failure: `${process.env.MERCADO_PAGO_URL}/success?idView=85&idMenu=1&tag=${tag}`,
+                    pending: `${process.env.MERCADO_PAGO_URL}/success?idView=85&idMenu=1&tag=${tag}`
                 },
                 auto_return: "approved",
             }

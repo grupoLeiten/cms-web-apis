@@ -6,15 +6,18 @@ export {
     getViewConfigByDomain, 
     buildNotFoundUrl, 
     buildLoginUrl, 
-    buildRegisterUrl 
+    buildRegisterUrl,
+    buildRecoverPasswordUrl,
+    buildRecoverPasswordTokenUrl
 } from "./urlBuilders";
 
 export const getDirectLink = async ({ request, idView, idMenu, token, idEntity = "" }: any) => {
     const result = await getVista({ params: { idView }, token });
     const { templateName } = result.vistaData;
 
-    const route = `${ROUTE_TEMPLATE_CONFIG[templateName as keyof typeof ROUTE_TEMPLATE_CONFIG]({ idView, idMenu, idEntity, search: {}, modo: "/simulable" })}`;
-    return route;
+    // const route =  `${ROUTE_TEMPLATE_CONFIG[templateName as keyof typeof ROUTE_TEMPLATE_CONFIG]({ idView, idMenu, idEntity, search: {}, modo: "/simulable" })}`;
+    // return route;
+    return buildShortUrlDirect({ idView, idEntity});
 }
 
 // Función helper para generar slugs (SEO friendly URLs)
@@ -52,7 +55,7 @@ export function buildShortUrlDirect({
     const slug = slugify(nombre);
     const utm = slugify(utmString);
     
-    let url = `/hikoki`;
+    let url = ``;
     
     if (utm && slug) {
         url += `/${utm}/${slug}`;
@@ -62,7 +65,7 @@ export function buildShortUrlDirect({
 
 
 
-    url += `?idView=${idView}&idMenu=1`;
+    url += `/?idView=${idView}&idMenu=1`;
     
     if(idEntity) {
         url += `&idEntity=${idEntity}`;
